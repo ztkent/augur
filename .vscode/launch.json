@@ -1,0 +1,14 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "🖥️ augur 🖥️",
+      "type": "go",
+      "request": "launch",
+      "program": "${workspaceFolder}/main.go",
+      "args": [],
+      "envFile": "${workspaceFolder}/.env",
+      "console": "integratedTerminal",
+    }
+    ]
+}
