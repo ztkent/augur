@@ -26,7 +26,8 @@ func (a *Augur) ServeHome() http.HandlerFunc {
 
 func (a *Augur) DoWork() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("User input: ", r.Form.Get("userInput"))
+		r.ParseForm()
+		fmt.Println(r.Form.Get("userInput"))
 		// Render the template
 		tmpl, err := template.ParseFiles("internal/html/templates/augur_response.gohtml")
 		if err != nil {

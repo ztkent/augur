@@ -10,7 +10,7 @@
     <p class="mb-4">Generate system prompts for LLM applications.</p>
     <form class="w-full max-w-sm" hx-post="/work" hx-trigger="submit" hx-target="#response" hx-indicator="#spinner">
         <div class="flex items-center border-b border-teal-500 py-2">
-           <input id="userInput" class="appearance-none bg-gray-700 border border-gray-600 w-full text-white ml-3 mr-3 py-1 px-2 leading-tight focus:outline-none rounded" type="text" placeholder="Enter something..." aria-label="Enter something"> 
+           <input name="userInput" class="appearance-none bg-gray-700 border border-gray-600 w-full text-white ml-3 mr-3 py-1 px-2 leading-tight focus:outline-none rounded" type="text" placeholder="Enter something..." aria-label="Enter something"> 
            <button class="flex-shrink-0 border-gray-600 hover:border-gray-400 text-sm border-4 text-white py-1 px-2 rounded" type="submit">
                 Go
             </button>
