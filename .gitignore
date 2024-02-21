@@ -20,4 +20,4 @@
 # Go workspace file
 go.work
 .env
-internal/prompts/augur.txt
+internal/prompts/intro_prompt
