@@ -1,6 +1,7 @@
 package prompts
 
 import (
+	"fmt"
 	"os"
 )
 
@@ -11,12 +12,11 @@ const (
 )
 
 func GetPrompt() string {
-	// if a prompt file exists, read the prompt from the file
-	// if the prompt file does not exist, return the default prompt
 	if promptFile := os.Getenv("PROMPT_FILE"); promptFile != "" {
 		if content, err := os.ReadFile(promptFile); err == nil {
 			return string(content)
 		}
 	}
+	fmt.Println("Using default prompt")
 	return AugurPrompt
 }

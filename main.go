@@ -2,18 +2,19 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
-	"github.com/Ztkent/augur/internal/routes"
+	"github.com/Ztkent/augur/internal/augur"
 	"github.com/Ztkent/augur/pkg/aiclient"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/httprate"
-	"github.com/rs/zerolog/log"
+	zlog "github.com/rs/zerolog/log"
 )
 
 /*
@@ -60,26 +61,26 @@ func main() {
 		}
 		// Connect to the OpenAI Client with the given model
 		if model, ok := aiclient.IsOpenAIModel(MODEL); ok {
-			log.Debug().Msg(fmt.Sprintf("Starting client with OpenAI-%s\n", model))
+			zlog.Debug().Msg(fmt.Sprintf("Starting client with OpenAI-%s\n", model))
 			client = aiclient.MustConnectOpenAI(model, float32(TEMPERATURE))
 		} else {
 			// Default to GPT-3.5 Turbo
-			log.Debug().Msg(fmt.Sprintf("Starting client with OpenAI-%s\n", aiclient.GPT35Turbo))
+			zlog.Debug().Msg(fmt.Sprintf("Starting client with OpenAI-%s\n", aiclient.GPT35Turbo))
 			client = aiclient.MustConnectOpenAI(aiclient.GPT35Turbo, float32(TEMPERATURE))
 		}
 	} else if AI_PROVIDER == "anyscale" {
 		err := aiclient.MustLoadAPIKey(false, true)
 		if err != nil {
-			log.Error().AnErr("Failed to load Anyscale API key", err)
+			zlog.Error().AnErr("Failed to load Anyscale API key", err)
 			return
 		}
 		// Connect to the Anyscale Client with the given model
 		if model, ok := aiclient.IsAnyscaleModel(MODEL); ok {
-			log.Debug().Msg(fmt.Sprintf("Starting client with Anyscale-%s\n", model))
+			zlog.Debug().Msg(fmt.Sprintf("Starting client with Anyscale-%s\n", model))
 			client = aiclient.MustConnectAnyscale(model, float32(TEMPERATURE))
 		} else {
 			// Default to CodeLlama
-			log.Debug().Msg(fmt.Sprintf("Starting client with Anyscale-%s\n", aiclient.CodeLlama34b))
+			zlog.Debug().Msg(fmt.Sprintf("Starting client with Anyscale-%s\n", aiclient.CodeLlama34b))
 			client = aiclient.MustConnectAnyscale(aiclient.CodeLlama34b, float32(TEMPERATURE))
 		}
 	} else {
@@ -92,23 +93,22 @@ func main() {
 	// Log request and recover from panics
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
-	augur := routes.Augur{
-		Client: client,
-	}
 
 	// Define routes
-	defineRoutes(r, &augur)
+	defineRoutes(r, &augur.Augur{
+		Client: client,
+	})
 
 	// Start server
 	fmt.Println("Server is running on port 8080")
 	if os.Getenv("ENV") == "dev" {
-		log.Err(http.ListenAndServe(":8080", r))
+		log.Fatal(http.ListenAndServe(":8080", r))
 	}
-	log.Err(http.ListenAndServeTLS(":8080", os.Getenv("CERT_PATH"), os.Getenv("CERT_KEY_PATH"), r))
+	log.Fatal(http.ListenAndServeTLS(":8080", os.Getenv("CERT_PATH"), os.Getenv("CERT_KEY_PATH"), r))
 	return
 }
 
-func defineRoutes(r *chi.Mux, augur *routes.Augur) {
+func defineRoutes(r *chi.Mux, a *augur.Augur) {
 	// Apply a rate limiter to all routes
 	r.Use(httprate.Limit(
 		10,             // requests
@@ -117,7 +117,9 @@ func defineRoutes(r *chi.Mux, augur *routes.Augur) {
 	))
 
 	// App page
-	r.Get("/", augur.ServeHome())
+	r.Get("/", a.ServeHome())
+	r.Post("/work", a.DoWork())
+	r.Post("/close", a.EmptyResponse())
 
 	// Serve static files
 	workDir, _ := os.Getwd()
@@ -138,4 +140,15 @@ func FileServer(r chi.Router, path string, root http.FileSystem) {
 	r.Get(path+"*", func(w http.ResponseWriter, r *http.Request) {
 		http.StripPrefix(path, http.FileServer(root)).ServeHTTP(w, r)
 	})
+}
+
+func checkRequiredEnvs() {
+	envs := []string{
+		"PROMPT_FILE",
+	}
+	for _, env := range envs {
+		if value := os.Getenv(env); value == "" {
+			log.Fatalf("%s environment variable is not set", env)
+		}
+	}
 }
