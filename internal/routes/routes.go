@@ -1,4 +1,4 @@
-package augur
+package routes
 
 import (
 	"fmt"
@@ -41,5 +41,14 @@ func (a *Augur) DoWork() http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 		return
+	}
+}
+
+func logForm(r *http.Request) {
+	r.ParseForm()
+	for key, values := range r.Form {
+		for _, value := range values {
+			log.Printf("Form key: %s, value: %s\n", key, value)
+		}
 	}
 }

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Ztkent/augur/internal/augur"
+	"github.com/Ztkent/augur/internal/routes"
 	"github.com/Ztkent/augur/pkg/aiclient"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -95,7 +95,7 @@ func main() {
 	r.Use(middleware.Recoverer)
 
 	// Define routes
-	defineRoutes(r, &augur.Augur{
+	defineRoutes(r, &routes.Augur{
 		Client: client,
 	})
 
@@ -108,7 +108,7 @@ func main() {
 	return
 }
 
-func defineRoutes(r *chi.Mux, a *augur.Augur) {
+func defineRoutes(r *chi.Mux, a *routes.Augur) {
 	// Apply a rate limiter to all routes
 	r.Use(httprate.Limit(
 		10,             // requests
