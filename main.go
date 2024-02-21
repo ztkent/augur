@@ -18,20 +18,6 @@ import (
 )
 
 /*
-Command-line interface for an Augur conversation.
-
-Usage:
-  augur [your prompt description]
-
-Flags:
-  -h:                        Show this message
-  -ai [openai, anyscale]:    Set the LLM Provider
-  -m [string]:               Set the model to use for the LLM response
-  -max-messages [int]:       Set the maximum conversation context length
-  -max-tokens [int]:         Set the maximum number of tokens to generate per response
-  -t [0.0-1.0]:              Set the temperature for the LLM response
-  -d:                        Show debug logging
-
   Model Options:
     -openai:
 	  - gpt-3.5-turbo, aka: turbo
@@ -43,7 +29,7 @@ Flags:
 	  - meta-llama/Llama-2-70b-chat-hf, aka: l70b
 	  - codellama/CodeLlama-34b-Instruct-hf, aka: cl34b
 	  - codellama/CodeLlama-70b-Instruct-hf, aka: cl70b
-.*/
+*/
 
 const (
 	AI_PROVIDER = "anyscale"
