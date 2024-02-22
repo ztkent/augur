@@ -61,7 +61,6 @@ func (a *Augur) DoWork() http.HandlerFunc {
 		// Once we have all 4 pieces, we will combine them into a single response
 		// We will review this prompt for language and completness.
 		// Return this prompt to the user.
-		// Accept feedback. Probably via /feedback which can take the entire response as a parameter.
 
 		// Build the 'Introduction' piece of the response
 		introResponse, err := a.completeIntroSection(r.Context(), userInput)
@@ -71,14 +70,14 @@ func (a *Augur) DoWork() http.HandlerFunc {
 			return
 		}
 		// Build the 'Pretraining' piece of the response
-		ptResponse, err := a.completePTSection(r.Context(), userInput)
+		ptResponse, err := a.completeListSection(r.Context(), userInput, PT_PROMPT)
 		if err != nil {
 			log.Default().Println(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		// Build the 'Rules' piece of the response
-		rulesResponse, err := a.completeRulesSection(r.Context(), "")
+		rulesResponse, err := a.completeListSection(r.Context(), "", RULES_PROMPT)
 		if err != nil {
 			log.Default().Println(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -106,60 +105,21 @@ func (a *Augur) DoWork() http.HandlerFunc {
 	}
 }
 func (a *Augur) completeIntroSection(ctx context.Context, userInput string) (string, error) {
-	complete := false
-	for !complete {
-		convo := aiclient.NewConversation(prompts.GetPrompt(INTRO_PROMPT), 0, 0)
-		// convo.SeedConversation()
-		res, err := a.Client.SendCompletionRequest(ctx, convo, userInput)
-		if err != nil {
-			log.Default().Println(err)
-			return "", err
-		}
-		return res, nil
-	}
-	return "", nil
-}
-func (a *Augur) completePTSection(ctx context.Context, userInput string) (string, error) {
-	var res string
-	complete := false
-	for !complete {
-		convo := aiclient.NewConversation(prompts.GetPrompt(PT_PROMPT), 0, 0)
-		// convo.SeedConversation()
-		var err error
-		res, err = a.Client.SendCompletionRequest(ctx, convo, userInput)
-		if err != nil {
-			log.Default().Println(err)
-			return "", err
-		}
-		// Split the response by newline
-		lines := strings.Split(res, "\n")
-
-		// Iterate over the lines and remove leading characters
-		for i, _ := range lines {
-			lines[i] = strings.TrimSpace(lines[i])
-			lines[i] = strings.TrimLeftFunc(lines[i], func(r rune) bool {
-				return r == '-' || r == '*' || unicode.IsDigit(r) || r == ' '
-			})
-			lines[i] = strings.TrimLeftFunc(lines[i], func(r rune) bool {
-				return r == '.' || r == ' '
-			})
-			lines[i] = "- " + lines[i]
-		}
-
-		// Ensure a valid response, block any words we know are bad
-		if len(lines) < 3 {
-			continue
-		}
-		complete = true
-		res = strings.Join(lines, "\n")
+	convo := aiclient.NewConversation(prompts.GetPrompt(INTRO_PROMPT), 0, 0)
+	// convo.SeedConversation()
+	res, err := a.Client.SendCompletionRequest(ctx, convo, userInput)
+	if err != nil {
+		log.Default().Println(err)
+		return "", err
 	}
 	return res, nil
 }
-func (a *Augur) completeRulesSection(ctx context.Context, userInput string) (string, error) {
+
+func (a *Augur) completeListSection(ctx context.Context, userInput string, prompt string) (string, error) {
 	var res string
 	complete := false
 	for !complete {
-		convo := aiclient.NewConversation(prompts.GetPrompt(RULES_PROMPT), 0, 0)
+		convo := aiclient.NewConversation(prompts.GetPrompt(prompt), 0, 0)
 		// convo.SeedConversation()
 		var err error
 		res, err = a.Client.SendCompletionRequest(ctx, convo, userInput)
@@ -170,9 +130,8 @@ func (a *Augur) completeRulesSection(ctx context.Context, userInput string) (str
 
 		// Split the response by newline
 		lines := strings.Split(res, "\n")
-
 		// Iterate over the lines and remove leading characters
-		for i, _ := range lines {
+		for i := range lines {
 			lines[i] = strings.TrimSpace(lines[i])
 			lines[i] = strings.TrimLeftFunc(lines[i], func(r rune) bool {
 				return r == '-' || r == '*' || unicode.IsDigit(r) || r == ' '
@@ -180,7 +139,6 @@ func (a *Augur) completeRulesSection(ctx context.Context, userInput string) (str
 			lines[i] = strings.TrimLeftFunc(lines[i], func(r rune) bool {
 				return r == '.' || r == ' '
 			})
-
 			lines[i] = "- " + lines[i]
 		}
 		// Ensure a valid response, block any words we know are bad
