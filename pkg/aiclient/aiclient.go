@@ -98,3 +98,11 @@ func (c *Client) SendStreamRequest(ctx context.Context, conv *Conversation, user
 	}
 	return
 }
+
+func (c *Client) SetTemperature(temp float32) {
+	c.Temperature = temp
+}
+
+func (c *Client) SetModel(model string) {
+	c.Model = model
+}

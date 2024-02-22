@@ -1,7 +1,18 @@
-<div class="relative mt-4 w-full max-w-md overflow-auto bg-white rounded p-4 shadow-lg" style="max-height: 50vh;">
-    <h4 class="text-xl font-bold mb-4 text-black">Response!</h4>
-    <button class="absolute top-0 right-0 bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 mr-2 mt-2 text-xs rounded" hx-post="/close" hx-trigger="click" hx-target="#response">
+<div class="relative mt-4 w-full max-w-3xl overflow-auto bg-gray-500 rounded p-4 shadow-lg" style="max-height: 50vh;">
+    <h4 class="text-xl font-bold mb-4 text-black">{{.AppName}}</h4>
+    <a href="/download" title="Download Prompt" class="absolute top-0 right-0 bg-gray-600 hover:bg-gray-700 text-white font-bold py-1 px-2 mr-2 mt-2 text-xs rounded" style="right: 30px;">
+        &#x1F4E5;
+    </a>
+    <button title="Clear Prompt" class="absolute top-0 right-0 bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 mr-2 mt-2 text-xs rounded" hx-post="/close" hx-trigger="click" hx-target="#response">
         X
     </button>
-    <p class="text-gray-600">{{.}}</p>
+    <span class="text-gray-900">
+        <p>{{.Introduction}}</p> <br>
+        <h3> ## Pretraining </h3>
+        <p>{{.Pretraining}}</p> <br>
+        <h3> ## Rules </h3>
+        <p>{{.Rules}}</p> <br>
+        <h3> ## Important </h3>
+        <p>{{.Important}}</p> <br>
+    </span>
 </div>

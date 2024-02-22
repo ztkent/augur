@@ -23,3 +23,6 @@ go.work
 internal/prompts/intro_prompt
 internal/prompts/pretraining_prompt
 internal/prompts/rules_prompt
+internal/prompts/reminder_prompt
+internal/prompts/appname_prompt
+temp/

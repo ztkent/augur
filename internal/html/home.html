@@ -4,13 +4,14 @@
     <title>Augur</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.16/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://unpkg.com/htmx.org@1.6.1"></script>
+    <div hx-post="/ensure-uuid" hx-swap="none" hx-trigger="load, every 15s"></div>
 </head>
 <body class="flex flex-col items-center justify-center h-screen space-y-4 text-white">
     <h1 class="text-4xl mb-4">Augur &#128021;</h1>
     <p class="mb-4">Generate system prompts for LLM applications.</p>
     <form class="w-full max-w-sm" hx-post="/work" hx-trigger="submit" hx-target="#response" hx-indicator="#spinner">
         <div class="flex items-center border-b border-teal-500 py-2">
-           <input name="userInput" class="appearance-none bg-gray-700 border border-gray-600 w-full text-white ml-3 mr-3 py-1 px-2 leading-tight focus:outline-none rounded" type="text" placeholder="Enter something..." aria-label="Enter something"> 
+           <input name="userInput" class="appearance-none bg-gray-700 border border-gray-600 w-full text-white ml-5 mr-3 py-1 px-2 leading-tight focus:outline-none rounded" type="text" placeholder="Enter something..." aria-label="Enter something"> 
            <button class="flex-shrink-0 border-gray-600 hover:border-gray-400 text-sm border-4 text-white py-1 px-2 rounded" type="submit">
                 Go
             </button>
@@ -21,6 +22,10 @@
                 </svg>
                 <span class="sr-only">Loading...</span>
             </div>
+        </div>
+        <div class="relative mb-6">
+            <label for="labels-range-input" class="sr-only">Labels range</label>
+            <input name="tempInput" id="labels-range-input" type="range" value="0.2" min="0.1" max="0.9" step="0.1" class="w-full h-2 rounded-lg appearance-none cursor-pointer bg-gray-700">
         </div>
     </form>
     <div id="response"></div>

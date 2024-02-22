@@ -32,8 +32,8 @@ import (
 */
 
 const (
-	AI_PROVIDER = "anyscale"
-	MODEL       = "m8x7b"
+	AI_PROVIDER = "openai"
+	MODEL       = "turbo"
 	TEMPERATURE = 0.2
 )
 
@@ -97,7 +97,7 @@ func main() {
 func defineRoutes(r *chi.Mux, a *routes.Augur) {
 	// Apply a rate limiter to all routes
 	r.Use(httprate.Limit(
-		10,             // requests
+		50,             // requests
 		60*time.Second, // per duration
 		httprate.WithKeyFuncs(httprate.KeyByIP, httprate.KeyByEndpoint),
 	))
@@ -106,6 +106,8 @@ func defineRoutes(r *chi.Mux, a *routes.Augur) {
 	r.Get("/", a.ServeHome())
 	r.Post("/work", a.DoWork())
 	r.Post("/close", a.EmptyResponse())
+	r.Get("/download", a.Download())
+	r.Post("/ensure-uuid", a.EnsureUUIDHandler()) // Make sure every active user is assigned a UUID
 
 	// Serve static files
 	workDir, _ := os.Getwd()
@@ -133,6 +135,8 @@ func checkRequiredEnvs() {
 		"INTRO_PROMPT",
 		"PT_PROMPT",
 		"RULES_PROMPT",
+		"REMINDER_PROMPT",
+		"APPNAME_PROMPT",
 	}
 	for _, env := range envs {
 		if value := os.Getenv(env); value == "" {
