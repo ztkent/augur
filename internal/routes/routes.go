@@ -1,10 +1,13 @@
 package routes
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"text/template"
+	"unicode"
 
 	"github.com/Ztkent/augur/internal/prompts"
 	"github.com/Ztkent/augur/pkg/aiclient"
@@ -12,6 +15,8 @@ import (
 
 const (
 	INTRO_PROMPT = "INTRO_PROMPT"
+	PT_PROMPT    = "PT_PROMPT"
+	RULES_PROMPT = "RULES_PROMPT"
 )
 
 type Augur struct {
@@ -58,22 +63,32 @@ func (a *Augur) DoWork() http.HandlerFunc {
 		// Return this prompt to the user.
 		// Accept feedback. Probably via /feedback which can take the entire response as a parameter.
 
-		resultPrompt := ""
 		// Build the 'Introduction' piece of the response
-		complete := false
-		for !complete {
-			introConversation := aiclient.NewConversation(prompts.GetPrompt(INTRO_PROMPT), 0, 0)
-			// introConversation.SeedConversation()
-			res, err := a.Client.SendCompletionRequest(r.Context(), introConversation, userInput)
-			if err != nil {
-				log.Default().Println(err)
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			// Validate the response
-			complete = true
-			resultPrompt += res
+		introResponse, err := a.completeIntroSection(r.Context(), userInput)
+		if err != nil {
+			log.Default().Println(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
+		// Build the 'Pretraining' piece of the response
+		ptResponse, err := a.completePTSection(r.Context(), userInput)
+		if err != nil {
+			log.Default().Println(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		// Build the 'Rules' piece of the response
+		rulesResponse, err := a.completeRulesSection(r.Context(), "")
+		if err != nil {
+			log.Default().Println(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		resultPrompt := ""
+		resultPrompt += introResponse + "\n"
+		resultPrompt += ptResponse + "\n"
+		resultPrompt += rulesResponse
 
 		// Render the template
 		tmpl, err := template.ParseFiles("internal/html/templates/augur_response.gohtml")
@@ -89,6 +104,93 @@ func (a *Augur) DoWork() http.HandlerFunc {
 		}
 		return
 	}
+}
+func (a *Augur) completeIntroSection(ctx context.Context, userInput string) (string, error) {
+	complete := false
+	for !complete {
+		convo := aiclient.NewConversation(prompts.GetPrompt(INTRO_PROMPT), 0, 0)
+		// convo.SeedConversation()
+		res, err := a.Client.SendCompletionRequest(ctx, convo, userInput)
+		if err != nil {
+			log.Default().Println(err)
+			return "", err
+		}
+		return res, nil
+	}
+	return "", nil
+}
+func (a *Augur) completePTSection(ctx context.Context, userInput string) (string, error) {
+	var res string
+	complete := false
+	for !complete {
+		convo := aiclient.NewConversation(prompts.GetPrompt(PT_PROMPT), 0, 0)
+		// convo.SeedConversation()
+		var err error
+		res, err = a.Client.SendCompletionRequest(ctx, convo, userInput)
+		if err != nil {
+			log.Default().Println(err)
+			return "", err
+		}
+		// Split the response by newline
+		lines := strings.Split(res, "\n")
+
+		// Iterate over the lines and remove leading characters
+		for i, _ := range lines {
+			lines[i] = strings.TrimSpace(lines[i])
+			lines[i] = strings.TrimLeftFunc(lines[i], func(r rune) bool {
+				return r == '-' || r == '*' || unicode.IsDigit(r) || r == ' '
+			})
+			lines[i] = strings.TrimLeftFunc(lines[i], func(r rune) bool {
+				return r == '.' || r == ' '
+			})
+			lines[i] = "- " + lines[i]
+		}
+
+		// Ensure a valid response, block any words we know are bad
+		if len(lines) < 3 {
+			continue
+		}
+		complete = true
+		res = strings.Join(lines, "\n")
+	}
+	return res, nil
+}
+func (a *Augur) completeRulesSection(ctx context.Context, userInput string) (string, error) {
+	var res string
+	complete := false
+	for !complete {
+		convo := aiclient.NewConversation(prompts.GetPrompt(RULES_PROMPT), 0, 0)
+		// convo.SeedConversation()
+		var err error
+		res, err = a.Client.SendCompletionRequest(ctx, convo, userInput)
+		if err != nil {
+			log.Default().Println(err)
+			return "", err
+		}
+
+		// Split the response by newline
+		lines := strings.Split(res, "\n")
+
+		// Iterate over the lines and remove leading characters
+		for i, _ := range lines {
+			lines[i] = strings.TrimSpace(lines[i])
+			lines[i] = strings.TrimLeftFunc(lines[i], func(r rune) bool {
+				return r == '-' || r == '*' || unicode.IsDigit(r) || r == ' '
+			})
+			lines[i] = strings.TrimLeftFunc(lines[i], func(r rune) bool {
+				return r == '.' || r == ' '
+			})
+
+			lines[i] = "- " + lines[i]
+		}
+		// Ensure a valid response, block any words we know are bad
+		if len(lines) < 3 {
+			continue
+		}
+		complete = true
+		res = strings.Join(lines, "\n")
+	}
+	return res, nil
 }
 
 func logForm(r *http.Request) {

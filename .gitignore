@@ -21,3 +21,5 @@
 go.work
 .env
 internal/prompts/intro_prompt
+internal/prompts/pretraining_prompt
+internal/prompts/rules_prompt

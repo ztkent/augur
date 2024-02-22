@@ -131,6 +131,8 @@ func FileServer(r chi.Router, path string, root http.FileSystem) {
 func checkRequiredEnvs() {
 	envs := []string{
 		"INTRO_PROMPT",
+		"PT_PROMPT",
+		"RULES_PROMPT",
 	}
 	for _, env := range envs {
 		if value := os.Getenv(env); value == "" {
