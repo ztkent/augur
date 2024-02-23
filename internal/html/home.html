@@ -11,7 +11,7 @@
     <p class="mb-4">Generate system prompts for LLM applications.</p>
     <form class="w-full max-w-sm" hx-post="/work" hx-trigger="submit" hx-target="#response" hx-indicator="#spinner">
         <div class="flex items-center border-b border-teal-500 py-2">
-           <input name="userInput" class="appearance-none bg-gray-700 border border-gray-600 w-full text-white ml-5 mr-3 py-1 px-2 leading-tight focus:outline-none rounded" type="text" placeholder="Enter something..." aria-label="Enter something"> 
+           <input name="userInput" class="appearance-none bg-gray-700 border border-gray-600 w-full text-white ml-5 mr-3 py-1 px-2 leading-tight focus:outline-none rounded" type="text" placeholder="Enter an App Idea..." aria-label="Enter an App Idea"> 
            <button class="flex-shrink-0 border-gray-600 hover:border-gray-400 text-sm border-4 text-white py-1 px-2 rounded" type="submit">
                 Go
             </button>
@@ -23,10 +23,25 @@
                 <span class="sr-only">Loading...</span>
             </div>
         </div>
-        <div class="relative mb-6">
-            <label for="labels-range-input" class="sr-only">Labels range</label>
-            <input name="tempInput" id="labels-range-input" title="Randomness" type="range" value="0.2" min="0.1" max="0.9" step="0.1" class="w-full h-2 rounded-lg appearance-none cursor-pointer bg-gray-700">
-        </div>
+        <details>
+            <summary>Options</summary>
+            <div class="relative mt-2 mb-2">
+            <select name="modelDropdown" id="modelDropdown" title="Select a Model" hx-post="/switch-model" hx-trigger="change" class="w-full rounded-lg appearance-none cursor-pointer bg-gray-700 pl-4 text-sm" style="height: 24px;">
+                <option value="openai,turbo">ChatGPT 3.5 Turbo</option>
+                <option value="anyscale,m8x7b">Mixtral 8x7B Instruct</option>
+                <option value="anyscale,m7b">Mistral7B Instruct</option>
+                <option value="anyscale,l7b">Llama 2.7b Chat</option>
+                <option value="anyscale,l13b">Llama 2.13b Chat</option>
+                <option value="anyscale,l70b">Llama 2.70b Chat</option>
+                <option value="anyscale,cl34b">Code Llama 34b</option>
+                <option value="anyscale,cl70b">Code Llama 70b</option>
+            </select>
+            </div>
+            <div class="relative mb-2">
+                <label for="labels-range-input" class="sr-only">Labels range</label>
+                <input name="tempInput" id="labels-range-input" title="Randomness" type="range" value="0.2" min="0.1" max="0.9" step="0.1" class="w-full h-2 rounded-lg appearance-none cursor-pointer bg-gray-700">
+            </div>
+        </details>
     </form>
     <div id="response"></div>
 </body>

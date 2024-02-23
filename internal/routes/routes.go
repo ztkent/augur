@@ -24,12 +24,6 @@ const (
 	REMINDER_PROMPT = "REMINDER_PROMPT"
 	APPNAME_PROMPT  = "APPNAME_PROMPT"
 	MAX_ATTEMPTS    = 5
-
-	AI_PROVIDER = "openai"
-	MODEL       = "turbo"
-	// AI_PROVIDER = "anyscale"
-	// MODEL       = "m8x7b"
-	TEMPERATURE = 0.2
 )
 
 type Augur struct {
@@ -80,12 +74,52 @@ func (a *Augur) Download() http.HandlerFunc {
 	}
 }
 
+func (a *Augur) SwitchModel() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		_, err := getRequestCookie(r, "uuid")
+		if err != nil {
+			http.Error(w, "User UUID not found", http.StatusBadRequest)
+			return
+		}
+		r.ParseForm()
+		modelVal := r.Form.Get("modelDropdown")
+		if modelVal == "" {
+			http.Error(w, "No model selected", http.StatusBadRequest)
+			return
+		}
+		provider := strings.Split(modelVal, ",")[0]
+		model := strings.Split(modelVal, ",")[1]
+
+		if provider == "openai" {
+			if model, ok := aiclient.IsOpenAIModel(model); ok {
+				fmt.Println(fmt.Sprintf("Swapping client to OpenAI-%s\n", model))
+				a.Client = aiclient.MustConnectOpenAI(model, float32(a.Client.Temperature))
+			} else {
+				http.Error(w, "Invalid OpenAI model", http.StatusBadRequest)
+				return
+			}
+		} else if provider == "anyscale" {
+			if model, ok := aiclient.IsAnyscaleModel(model); ok {
+				fmt.Println(fmt.Sprintf("Swapping client to Anyscale-%s\n", model))
+				a.Client = aiclient.MustConnectAnyscale(model, float32(a.Client.Temperature))
+			} else {
+				http.Error(w, "Invalid Anyscale model", http.StatusBadRequest)
+				return
+			}
+		} else {
+			http.Error(w, "Invalid AI provider", http.StatusBadRequest)
+			return
+		}
+	}
+}
+
 type Prompt struct {
 	Introduction string
 	Pretraining  string
 	Rules        string
 	Important    string
 	AppName      string
+	RequestLog   string
 }
 
 func (a *Augur) DoWork() http.HandlerFunc {
@@ -112,7 +146,7 @@ func (a *Augur) DoWork() http.HandlerFunc {
 			http.Error(w, "Failed to set Temperature", http.StatusBadRequest)
 			return
 		}
-		fmt.Println(uuid + " : " + userInput + " : " + fmt.Sprintf("%f", tempInput) + " : " + AI_PROVIDER + " : " + MODEL)
+		requestLog := fmt.Sprint(userInput + " - model: " + a.Client.Model + " - " + fmt.Sprintf("temp: %f", tempInput))
 		a.Client.SetTemperature(float32(tempInput))
 
 		// Generate the each piece of the response concurrently
@@ -190,7 +224,8 @@ func (a *Augur) DoWork() http.HandlerFunc {
 			resultPrompt += "## Rules\n"
 			resultPrompt += responsePrompt.Rules + "\n\n"
 			resultPrompt += "## Important\n"
-			resultPrompt += responsePrompt.Important
+			resultPrompt += responsePrompt.Important + "\n\n"
+			resultPrompt += requestLog + "\n"
 			fmt.Println(resultPrompt)
 
 			// Review this prompt for language and completeness.
@@ -203,6 +238,7 @@ func (a *Augur) DoWork() http.HandlerFunc {
 		}
 
 		// Write the response to the temp folder
+		responsePrompt.RequestLog = requestLog
 		err = writeResults(uuid, responsePrompt)
 		if err != nil {
 			log.Default().Println(err)
@@ -247,7 +283,13 @@ func (a *Augur) completeIntroSection(ctx context.Context, userInput string) (str
 		if err != nil {
 			return "", err
 		}
-		res = strings.TrimSpace(res)
+		res = strings.TrimFunc(res, func(r rune) bool {
+			return r == '-' || r == '*' || unicode.IsDigit(r) || r == '[' || r == ']' || r == '.' || r == '`' || r == ' ' || r == '\n'
+		})
+		if res == "" {
+			attempts++
+			continue
+		}
 
 		// Check if the line contains a blocked word
 		reset := false
@@ -285,9 +327,8 @@ func (a *Augur) completeListSection(ctx context.Context, userInput string, promp
 		// Iterate over the lines and remove leading characters
 		outputLines := make([]string, 0)
 		for i, line := range lines {
-			line = strings.TrimSpace(line)
-			line = strings.TrimLeftFunc(line, func(r rune) bool {
-				return r == '-' || r == '*' || unicode.IsDigit(r) || r == '[' || r == ']' || r == '.' || r == '`' || r == ' '
+			line = strings.TrimFunc(line, func(r rune) bool {
+				return r == '-' || r == '*' || unicode.IsDigit(r) || r == '[' || r == ']' || r == '.' || r == '`' || r == ' ' || r == '\n'
 			})
 			if line == "" {
 				continue
