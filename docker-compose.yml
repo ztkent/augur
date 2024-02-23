@@ -1,0 +1,29 @@
+version: '3.9'
+networks:
+  kent_network:
+    name: kent_network
+services:
+  augur:
+    build:
+      context: .
+      args:
+        GIT_USERNAME: ${GIT_USERNAME}
+        GIT_TOKEN: ${GIT_TOKEN}
+    expose:
+      - 8081
+    environment:
+      - ENV=${ENV}
+      - APP_PORT=8081
+      - CERT_PATH=${CERT_PATH}
+      - CERT_KEY_PATH=${CERT_KEY_PATH}
+      - ANYSCALE_ENDPOINT_TOKEN=${ANYSCALE_ENDPOINT_TOKEN}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - INTRO_PROMPT=${INTRO_PROMPT}
+      - PT_PROMPT=${PT_PROMPT}  
+      - RULES_PROMPT=${RULES_PROMPT}
+      - REMINDER_PROMPT=${REMINDER_PROMPT}
+      - APPNAME_PROMPT=${APPNAME_PROMPT}
+    profiles:
+      - augur
+    networks:
+      - kent_network

@@ -23,3 +23,11 @@ install:
 	mv augur $(GOPATH)/bin
 
 all: clean deps test build
+
+.PHONY: app-up
+app-up:
+	docker-compose -p augur --profile augur up
+
+.PHONY: app-down
+app-down:
+	docker-compose -p augur --profile augur down

@@ -90,11 +90,11 @@ func main() {
 	})
 
 	// Start server
-	fmt.Println("Server is running on port 8080")
+	fmt.Println("Server is running on port " + os.Getenv("APP_PORT"))
 	if os.Getenv("ENV") == "dev" {
-		log.Fatal(http.ListenAndServe(":8080", r))
+		log.Fatal(http.ListenAndServe(":"+os.Getenv("APP_PORT"), r))
 	}
-	log.Fatal(http.ListenAndServeTLS(":8080", os.Getenv("CERT_PATH"), os.Getenv("CERT_KEY_PATH"), r))
+	log.Fatal(http.ListenAndServeTLS(":"+os.Getenv("APP_PORT"), os.Getenv("CERT_PATH"), os.Getenv("CERT_KEY_PATH"), r))
 	return
 }
 
@@ -137,6 +137,7 @@ func FileServer(r chi.Router, path string, root http.FileSystem) {
 
 func checkRequiredEnvs() {
 	envs := []string{
+		"APP_PORT",
 		"INTRO_PROMPT",
 		"PT_PROMPT",
 		"RULES_PROMPT",
