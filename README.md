@@ -8,11 +8,13 @@ A system prompt is crucial in guiding the direction and quality of responses gen
 ## Why Augur?
 Augur is capable of generating well-structured and pre-aligned system prompts from a simple conversation. This allows developers to quickly try different inputs, adjust their model's behavior, and iterate on the development of applications that use natural language generation. 
 
-## How does it work?
-When a system prompt is requested, Augur will:  
+## How Does It Work?
 
-- Generate a given section of the instructions. Responses are reviewed, and validated to ensure that they match the desired structure and content.  
-- Augur will then generate the next section of the prompt, and the process will continue until the entire system prompt is generated.  
-- In the end, a full output is produced and scored by the LLM. This is provided to the user.  
-- The user can provide feedback. This feedback is fed into the loop and it is repeated.  
-- Users can target a specific section of the prompt to regenerate if the other parts are satisfactory.  
+When a system prompt is requested, Augur performs the following steps:
+
+1. Evaluate the user's input and identifies the key themes and topics.
+2. Generate each section of the system prompt simultaneously, reducing computation time.
+3. Each response is reviewed and validated to ensure it aligns with the desired structure and content.
+4. Merge each section to a final document, which is then evaluated by the LLM
+5. Present the output to the user. 
+6. Provide the options to copy or download the new system prompt in Markdown format.
