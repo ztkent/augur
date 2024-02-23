@@ -124,7 +124,6 @@ type Prompt struct {
 
 func (a *Augur) DoWork() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		r.ParseForm()
 		// Validate the UUID
 		uuid, err := getRequestCookie(r, "uuid")
 		if err != nil {
@@ -134,27 +133,28 @@ func (a *Augur) DoWork() http.HandlerFunc {
 		}
 
 		// Grab the user input
-		userInput := r.Form.Get("userInput")
-		if userInput == "" {
-			log.Default().Println("No App Idea provided")
-			serveToast(w, "No App Idea provided")
-			return
-		} else if len(userInput) > 75 {
-			log.Default().Println("App Idea too long")
-			serveToast(w, "App Idea too long")
-			return
-		}
-		userInput = "App Idea: " + userInput
-
-		// Set the custom temperature
-		tempInput, err := strconv.ParseFloat(r.Form.Get("tempInput"), 32)
+		r.ParseForm()
+		userInput, err := getUserInput(r)
 		if err != nil {
 			log.Default().Println(err)
-			serveToast(w, "Invalid temperature setting")
+			serveToast(w, err.Error())
 			return
 		}
-		requestLog := fmt.Sprint(userInput + " - Model: " + a.Client.Model + " - " + fmt.Sprintf("Temp: %f", tempInput))
-		a.Client.SetTemperature(float32(tempInput))
+		// Check if we need to change the model
+		err = a.checkModelSwap(r, w)
+		if err != nil {
+			log.Default().Println(err)
+			serveToast(w, err.Error())
+			return
+		}
+		// Set the custom temperature
+		err = a.setTemperature(r)
+		if err != nil {
+			return
+		}
+		// Log the complete request
+		requestLog := fmt.Sprint(userInput + " - Model: " + a.Client.Model + " - " + fmt.Sprintf("Temp: %f", a.Client.Temperature))
+		fmt.Println(requestLog)
 
 		// Generate the each piece of the response concurrently
 		attempts := 0
@@ -238,8 +238,7 @@ func (a *Augur) DoWork() http.HandlerFunc {
 			resultPrompt += "## Rules\n"
 			resultPrompt += responsePrompt.Rules + "\n\n"
 			resultPrompt += "## Important\n"
-			resultPrompt += responsePrompt.Important + "\n\n"
-			resultPrompt += requestLog + "\n"
+			resultPrompt += responsePrompt.Important + "\n"
 			fmt.Println(resultPrompt)
 
 			// Review this prompt for language and completeness.
@@ -275,6 +274,52 @@ func (a *Augur) DoWork() http.HandlerFunc {
 		}
 		return
 	}
+}
+
+func (a *Augur) setTemperature(r *http.Request) error {
+	tempInput, err := strconv.ParseFloat(r.Form.Get("tempInput"), 32)
+	if err != nil {
+		log.Default().Println(err)
+		return err
+	}
+	a.Client.SetTemperature(float32(tempInput))
+	return nil
+}
+
+func getUserInput(r *http.Request) (string, error) {
+	userInput := r.Form.Get("userInput")
+	if userInput == "" {
+		return "", fmt.Errorf("No App Idea provided")
+	} else if len(userInput) > 75 {
+		return "", fmt.Errorf("App Idea too long")
+	}
+	userInput = "App Idea: " + userInput
+	return userInput, nil
+}
+
+func (a *Augur) checkModelSwap(r *http.Request, w http.ResponseWriter) error {
+	modelVal := r.Form.Get("modelDropdown")
+	if modelVal == "" {
+		return fmt.Errorf("No model selected")
+	}
+	provider := strings.Split(modelVal, ",")[0]
+	model := strings.Split(modelVal, ",")[1]
+	if provider == "openai" {
+		if model_name, ok := aiclient.IsOpenAIModel(model); ok {
+			if model_name.String() != a.Client.Model {
+				a.SwitchModel()(w, r)
+			}
+		}
+	} else if provider == "anyscale" {
+		if model_name, ok := aiclient.IsAnyscaleModel(model); ok {
+			if model_name.String() != a.Client.Model {
+				a.SwitchModel()(w, r)
+			}
+		}
+	} else {
+		return fmt.Errorf("Invalid AI provider")
+	}
+	return nil
 }
 
 var blockedWords = map[string]bool{
