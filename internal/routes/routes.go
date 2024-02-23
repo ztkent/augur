@@ -276,6 +276,51 @@ func (a *Augur) DoWork() http.HandlerFunc {
 	}
 }
 
+func (a *Augur) Regenerate() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Validate the UUID
+		_, err := getRequestCookie(r, "uuid")
+		if err != nil {
+			log.Default().Println(err)
+			serveToast(w, "Failed to read UUID")
+			return
+		}
+
+		r.ParseForm()
+		regenSection := r.Form.Get("regenSection")
+		if regenSection == "" {
+			serveToast(w, "No section to regenerate")
+			return
+		}
+		fmt.Println("Regenerating: " + regenSection)
+
+		// Set the new response prompt
+		responsePrompt := Prompt{
+			AppName:      r.Form.Get("appName"),
+			Introduction: r.Form.Get("introduction"),
+			Pretraining:  r.Form.Get("pretraining"),
+			Rules:        r.Form.Get("rules"),
+			Important:    r.Form.Get("important"),
+			RequestLog:   r.Form.Get("requestLog"),
+		}
+
+		// Render the template
+		tmpl, err := template.ParseFiles("internal/html/templates/augur_response.gohtml")
+		if err != nil {
+			log.Default().Println(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		err = tmpl.Execute(w, responsePrompt)
+		if err != nil {
+			log.Default().Println(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+		return
+
+	}
+}
+
 func (a *Augur) setTemperature(r *http.Request) error {
 	tempInput, err := strconv.ParseFloat(r.Form.Get("tempInput"), 32)
 	if err != nil {

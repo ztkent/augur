@@ -1,19 +1,70 @@
+<script>
+    function selectRegen(value) {
+        document.getElementById('regenSection').value = value;
+    }
+</script>
+
 <div class="relative mt-4 w-full max-w-3xl overflow-auto bg-gray-400 rounded p-4 shadow-lg" style="max-height: 50vh;">
-    <h4 class="text-xl font-bold mb-4 text-black">{{.AppName}}</h4>
-    <a href="/download" title="Download Prompt" class="absolute top-0 right-0 bg-gray-600 hover:bg-gray-700 text-white font-bold py-1 px-2 mr-2 mt-2 text-xs rounded" style="right: 30px;">
-        &#x1F4E5;
-    </a>
-    <button title="Clear Prompt" class="absolute top-0 right-0 bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 mr-3 mt-2 text-xs rounded" hx-post="/close" hx-trigger="click" hx-target="#response">
-        X
-    </button>
-    <span class="text-gray-900">
-        <p>{{.Introduction}}</p> <br>
-        <h3> ## Pretraining </h3>
+    <form hx-post="/regenerate" hx-trigger="submit" hx-target="#response" hx-indicator="#spinner"> 
+        <h4 class="text-xl font-bold mb-4 text-black">{{.AppName}}
+            <button style="vertical-align: middle;" onclick="selectRegen('appName');">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-clockwise" viewBox="0 0 16 16" style="vertical-align: text-bottom;">
+                    <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                    <path d="M8 4a4 4 0 1 1-4 4 4 4 0 0 1 4-4z"/>
+                </svg>
+            </button>
+        </h4>
+        <a type="button" href="/download" title="Download Prompt" class="absolute top-0 right-0 bg-gray-600 hover:bg-gray-700 text-white font-bold py-1 px-2 mr-2 mt-2 text-xs rounded" style="right: 30px;">
+            &#x1F4E5;
+        </a>
+        <button type="button" title="Clear Prompt" class="absolute top-0 right-0 bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 mr-3 mt-2 text-xs rounded" hx-post="/close" hx-trigger="click" hx-target="#response">
+            X
+        </button>
+        <input type="hidden" id="appName" name="appName" value="{{.AppName}}">
+        <input type="hidden" id="introduction" name="introduction" value="{{.Introduction}}">
+        <input type="hidden" id="pretraining" name="pretraining" value="{{.Pretraining}}">
+        <input type="hidden" id="rules" name="rules" value="{{.Rules}}">
+        <input type="hidden" id="important" name="important" value="{{.Important}}">
+        <input type="hidden" id="requestLog" name="requestLog" value="{{.RequestLog}}">
+        <input type="hidden" id="regenSection" name="regenSection">
+
+        <span class="text-gray-900">
+        <p>{{.Introduction}}
+            <button style="vertical-align: middle;" onclick="selectRegen('introduction');">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-clockwise" viewBox="0 0 16 16" style="vertical-align: text-bottom;">
+                    <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                    <path d="M8 4a4 4 0 1 1-4 4 4 4 0 0 1 4-4z"/>
+                </svg>
+            </button>
+        </p> <br>
+        <h3> ## Pretraining 
+            <button style="vertical-align: middle;" onclick="selectRegen('pretraining');">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-clockwise" viewBox="0 0 16 16" style="vertical-align: text-bottom;">
+                    <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                    <path d="M8 4a4 4 0 1 1-4 4 4 4 0 0 1 4-4z"/>
+                </svg>
+            </button>
+        </h3>
         <p>{{.Pretraining}}</p> <br>
-        <h3> ## Rules </h3>
+        <h3> ## Rules 
+            <button style="vertical-align: middle;" onclick="selectRegen('rules');">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-clockwise" viewBox="0 0 16 16" style="vertical-align: text-bottom;">
+                    <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                    <path d="M8 4a4 4 0 1 1-4 4 4 4 0 0 1 4-4z"/>
+                </svg>
+            </button>
+        </h3>
         <p>{{.Rules}}</p> <br>
-        <h3> ## Important </h3>
+        <h3> ## Important
+            <button style="vertical-align: middle;" onclick="selectRegen('important');">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-clockwise" viewBox="0 0 16 16" style="vertical-align: text-bottom;">
+                    <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                    <path d="M8 4a4 4 0 1 1-4 4 4 4 0 0 1 4-4z"/>
+                </svg>
+            </button>
+        </h3>
         <p>{{.Important}}</p> <br>
         <p>{{.RequestLog}}</p>
-    </span>
+        </span>
+    </form>
 </div>

@@ -112,6 +112,7 @@ func defineRoutes(r *chi.Mux, a *routes.Augur) {
 	r.Post("/close", a.EmptyResponse())
 	r.Get("/download", a.Download())
 	r.Post("/switch-model", a.SwitchModel())
+	r.Post("/regenerate", a.Regenerate())
 	r.Post("/ensure-uuid", a.EnsureUUIDHandler()) // Make sure every active user is assigned a UUID
 
 	// Serve static files
