@@ -23,7 +23,7 @@ const (
 	RULES_PROMPT    = "RULES_PROMPT"
 	REMINDER_PROMPT = "REMINDER_PROMPT"
 	APPNAME_PROMPT  = "APPNAME_PROMPT"
-	MAX_ATTEMPTS    = 5
+	MAX_ATTEMPTS    = 3
 )
 
 type Augur struct {
@@ -128,14 +128,20 @@ func (a *Augur) DoWork() http.HandlerFunc {
 		// Validate the UUID
 		uuid, err := getRequestCookie(r, "uuid")
 		if err != nil {
-			http.Error(w, "User UUID not found", http.StatusBadRequest)
+			log.Default().Println(err)
+			serveToast(w, "Failed to read UUID")
 			return
 		}
 
 		// Grab the user input
 		userInput := r.Form.Get("userInput")
 		if userInput == "" {
-			http.Error(w, "No user input", http.StatusBadRequest)
+			log.Default().Println("No App Idea provided")
+			serveToast(w, "No App Idea provided")
+			return
+		} else if len(userInput) > 75 {
+			log.Default().Println("App Idea too long")
+			serveToast(w, "App Idea too long")
 			return
 		}
 		userInput = "App Idea: " + userInput
@@ -143,17 +149,24 @@ func (a *Augur) DoWork() http.HandlerFunc {
 		// Set the custom temperature
 		tempInput, err := strconv.ParseFloat(r.Form.Get("tempInput"), 32)
 		if err != nil {
-			http.Error(w, "Failed to set Temperature", http.StatusBadRequest)
+			log.Default().Println(err)
+			serveToast(w, "Invalid temperature setting")
 			return
 		}
-		requestLog := fmt.Sprint(userInput + " - model: " + a.Client.Model + " - " + fmt.Sprintf("temp: %f", tempInput))
+		requestLog := fmt.Sprint(userInput + " - Model: " + a.Client.Model + " - " + fmt.Sprintf("Temp: %f", tempInput))
 		a.Client.SetTemperature(float32(tempInput))
 
 		// Generate the each piece of the response concurrently
+		attempts := 0
 		complete := false
 		errChan := make(chan error, 5)
 		responsePrompt := Prompt{}
 		for !complete {
+			if attempts > MAX_ATTEMPTS {
+				serveToast(w, "Failed to generate a valid response")
+				return
+			}
+
 			// Build the 'Introduction' piece of the response
 			wg := sync.WaitGroup{}
 			wg.Add(5)
@@ -213,8 +226,9 @@ func (a *Augur) DoWork() http.HandlerFunc {
 			select {
 			case err := <-errChan:
 				log.Default().Println(err)
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
+				serveToast(w, err.Error())
+				attempts++
+				continue
 			default:
 			}
 
@@ -232,6 +246,7 @@ func (a *Augur) DoWork() http.HandlerFunc {
 			words := strings.Fields(resultPrompt)
 			if len(words) < 100 {
 				fmt.Println("Prompt is too short, trying again")
+				attempts++
 				continue
 			}
 			complete = true
@@ -409,6 +424,28 @@ func getRequestCookie(r *http.Request, name string) (string, error) {
 		return "", fmt.Errorf("Cookie not found")
 	}
 	return cookie.Value, nil
+}
+
+type Toast struct {
+	ToastContent string
+	Border       string
+}
+
+func serveToast(w http.ResponseWriter, message string) {
+	// Render the crawl_status template, which displays the toast
+	tmpl, err := template.ParseFiles("internal/html/templates/toast.gohtml")
+	if err != nil {
+		log.Default().Println(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	toast := &Toast{ToastContent: message, Border: "border-red-200"}
+	err = tmpl.Execute(w, toast)
+	if err != nil {
+		log.Default().Println(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	return
 }
 
 func logForm(r *http.Request) {

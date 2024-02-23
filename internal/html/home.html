@@ -23,18 +23,20 @@
                 <span class="sr-only">Loading...</span>
             </div>
         </div>
-        <details>
-            <summary>Options</summary>
+        <details class="mt-2">
+            <summary>Additional Options</summary>
             <div class="relative mt-2 mb-2">
             <select name="modelDropdown" id="modelDropdown" title="Select a Model" hx-post="/switch-model" hx-trigger="change" class="w-full rounded-lg appearance-none cursor-pointer bg-gray-700 pl-4 text-sm" style="height: 24px;">
                 <option value="openai,turbo">ChatGPT 3.5 Turbo</option>
                 <option value="anyscale,m8x7b">Mixtral 8x7B Instruct</option>
+                <!--
                 <option value="anyscale,m7b">Mistral7B Instruct</option>
                 <option value="anyscale,l7b">Llama 2.7b Chat</option>
                 <option value="anyscale,l13b">Llama 2.13b Chat</option>
                 <option value="anyscale,l70b">Llama 2.70b Chat</option>
                 <option value="anyscale,cl34b">Code Llama 34b</option>
                 <option value="anyscale,cl70b">Code Llama 70b</option>
+                -->
             </select>
             </div>
             <div class="relative mb-2">

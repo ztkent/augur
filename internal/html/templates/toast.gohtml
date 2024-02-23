@@ -1,0 +1,14 @@
+<div id="toastDiv">
+    <div id="toast" class="fixed top-16 right-4 m-6 w-64 bg-gray-800 text-white px-4 py-2 rounded shadow-lg opacity-100 transition-opacity duration-500 ease-in-out z-50 border-2 border-opacity-50 {{.Border}}">
+        <div class="flex justify-between items-center">
+            <div id="toast-content">
+                {{.ToastContent}}
+            </div>
+            <button id="toast-dismiss" class="ml-4" hx-post="/close" hx-target="#toastDiv">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="h-6 w-6 text-gray-200">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+</div>
