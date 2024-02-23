@@ -4,7 +4,7 @@
     <title>Augur</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.16/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://unpkg.com/htmx.org@1.6.1"></script>
-    <div hx-post="/ensure-uuid" hx-swap="none" hx-trigger="load, every 15s"></div>
+    <div hx-post="/ensure-uuid" hx-swap="none" hx-trigger="load, every 60s"></div>
 </head>
 <body class="flex flex-col items-center justify-center h-screen space-y-4 text-white">
     <h1 class="text-4xl mb-4">Augur &#128021;</h1>
@@ -25,7 +25,7 @@
         </div>
         <div class="relative mb-6">
             <label for="labels-range-input" class="sr-only">Labels range</label>
-            <input name="tempInput" id="labels-range-input" type="range" value="0.2" min="0.1" max="0.9" step="0.1" class="w-full h-2 rounded-lg appearance-none cursor-pointer bg-gray-700">
+            <input name="tempInput" id="labels-range-input" title="Randomness" type="range" value="0.2" min="0.1" max="0.9" step="0.1" class="w-full h-2 rounded-lg appearance-none cursor-pointer bg-gray-700">
         </div>
     </form>
     <div id="response"></div>

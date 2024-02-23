@@ -31,46 +31,42 @@ import (
 	  - codellama/CodeLlama-70b-Instruct-hf, aka: cl70b
 */
 
-const (
-	AI_PROVIDER = "openai"
-	MODEL       = "turbo"
-	TEMPERATURE = 0.2
-)
-
 func main() {
+	// Load the API key and connect to the AI provider
+	checkRequiredEnvs()
 	var client *aiclient.Client
-	if AI_PROVIDER == "openai" {
+	if routes.AI_PROVIDER == "openai" {
 		err := aiclient.MustLoadAPIKey(true, false)
 		if err != nil {
 			fmt.Printf("Failed to load OpenAI API key: %s\n", err)
 			return
 		}
 		// Connect to the OpenAI Client with the given model
-		if model, ok := aiclient.IsOpenAIModel(MODEL); ok {
+		if model, ok := aiclient.IsOpenAIModel(routes.MODEL); ok {
 			zlog.Debug().Msg(fmt.Sprintf("Starting client with OpenAI-%s\n", model))
-			client = aiclient.MustConnectOpenAI(model, float32(TEMPERATURE))
+			client = aiclient.MustConnectOpenAI(model, float32(routes.TEMPERATURE))
 		} else {
 			// Default to GPT-3.5 Turbo
 			zlog.Debug().Msg(fmt.Sprintf("Starting client with OpenAI-%s\n", aiclient.GPT35Turbo))
-			client = aiclient.MustConnectOpenAI(aiclient.GPT35Turbo, float32(TEMPERATURE))
+			client = aiclient.MustConnectOpenAI(aiclient.GPT35Turbo, float32(routes.TEMPERATURE))
 		}
-	} else if AI_PROVIDER == "anyscale" {
+	} else if routes.AI_PROVIDER == "anyscale" {
 		err := aiclient.MustLoadAPIKey(false, true)
 		if err != nil {
 			zlog.Error().AnErr("Failed to load Anyscale API key", err)
 			return
 		}
 		// Connect to the Anyscale Client with the given model
-		if model, ok := aiclient.IsAnyscaleModel(MODEL); ok {
+		if model, ok := aiclient.IsAnyscaleModel(routes.MODEL); ok {
 			zlog.Debug().Msg(fmt.Sprintf("Starting client with Anyscale-%s\n", model))
-			client = aiclient.MustConnectAnyscale(model, float32(TEMPERATURE))
+			client = aiclient.MustConnectAnyscale(model, float32(routes.TEMPERATURE))
 		} else {
 			// Default to CodeLlama
 			zlog.Debug().Msg(fmt.Sprintf("Starting client with Anyscale-%s\n", aiclient.CodeLlama34b))
-			client = aiclient.MustConnectAnyscale(aiclient.CodeLlama34b, float32(TEMPERATURE))
+			client = aiclient.MustConnectAnyscale(aiclient.CodeLlama34b, float32(routes.TEMPERATURE))
 		}
 	} else {
-		fmt.Println(fmt.Sprintf("Invalid AI provider: %s provided, select either anyscale or openai", AI_PROVIDER))
+		fmt.Println(fmt.Sprintf("Invalid AI provider: %s provided, select either anyscale or openai", routes.AI_PROVIDER))
 		return
 	}
 

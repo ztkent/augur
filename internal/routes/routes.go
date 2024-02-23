@@ -23,6 +23,13 @@ const (
 	RULES_PROMPT    = "RULES_PROMPT"
 	REMINDER_PROMPT = "REMINDER_PROMPT"
 	APPNAME_PROMPT  = "APPNAME_PROMPT"
+	MAX_ATTEMPTS    = 5
+
+	AI_PROVIDER = "openai"
+	MODEL       = "turbo"
+	// AI_PROVIDER = "anyscale"
+	// MODEL       = "m8x7b"
+	TEMPERATURE = 0.2
 )
 
 type Augur struct {
@@ -105,7 +112,7 @@ func (a *Augur) DoWork() http.HandlerFunc {
 			http.Error(w, "Failed to set Temperature", http.StatusBadRequest)
 			return
 		}
-		fmt.Println(uuid + " : " + userInput + " : " + fmt.Sprintf("%f", tempInput))
+		fmt.Println(uuid + " : " + userInput + " : " + fmt.Sprintf("%f", tempInput) + " : " + AI_PROVIDER + " : " + MODEL)
 		a.Client.SetTemperature(float32(tempInput))
 
 		// Generate the each piece of the response concurrently
@@ -230,6 +237,10 @@ var blockedWords = map[string]bool{
 func (a *Augur) completeIntroSection(ctx context.Context, userInput string) (string, error) {
 	attempts := 0
 	for {
+		if attempts > MAX_ATTEMPTS {
+			return "", fmt.Errorf("Failed to generate a valid intro")
+		}
+
 		convo := aiclient.NewConversation(prompts.GetPrompt(INTRO_PROMPT), 0, 0)
 		// convo.SeedConversation()
 		res, err := a.Client.SendCompletionRequest(ctx, convo, userInput)
@@ -256,13 +267,15 @@ func (a *Augur) completeIntroSection(ctx context.Context, userInput string) (str
 
 func (a *Augur) completeListSection(ctx context.Context, userInput string, prompt string, minResponseLength int, maxResponseLength int) (string, error) {
 	attempts := 0
-	res := ""
-	reset := false
 	for {
+		if attempts > MAX_ATTEMPTS {
+			return "", fmt.Errorf("Failed to generate a valid " + prompt + " list")
+		}
+
 		convo := aiclient.NewConversation(prompts.GetPrompt(prompt), 0, 0)
 		// convo.SeedConversation()
 		var err error
-		res, err = a.Client.SendCompletionRequest(ctx, convo, userInput)
+		res, err := a.Client.SendCompletionRequest(ctx, convo, userInput)
 		if err != nil {
 			return "", err
 		}
@@ -270,40 +283,43 @@ func (a *Augur) completeListSection(ctx context.Context, userInput string, promp
 		// Split the response by newline
 		lines := strings.Split(res, "\n")
 		// Iterate over the lines and remove leading characters
-		for i := range lines {
-			lines[i] = strings.TrimSpace(lines[i])
-			lines[i] = strings.TrimLeftFunc(lines[i], func(r rune) bool {
-				return r == '-' || r == '*' || unicode.IsDigit(r) || r == '[' || r == ']' || r == ' '
+		outputLines := make([]string, 0)
+		for i, line := range lines {
+			line = strings.TrimSpace(line)
+			line = strings.TrimLeftFunc(line, func(r rune) bool {
+				return r == '-' || r == '*' || unicode.IsDigit(r) || r == '[' || r == ']' || r == '.' || r == '`' || r == ' '
 			})
-			lines[i] = strings.TrimLeftFunc(lines[i], func(r rune) bool {
-				return r == '.' || r == ' '
-			})
-			lines[i] = "- " + lines[i]
+			if line == "" {
+				continue
+			}
 			// Check if the line contains a blocked word
 			for blockedWord := range blockedWords {
 				if strings.Contains(lines[i], blockedWord) {
-					reset = true
-					break
+					continue
 				}
 			}
+
+			line = "- " + line
+			outputLines = append(outputLines, line)
 		}
 
 		// Ensure a valid response, block any words we know are bad
-		if reset {
-			attempts++
-			continue
-		} else if len(lines) < minResponseLength || len(lines) > maxResponseLength {
+		if len(outputLines) < minResponseLength || len(outputLines) > maxResponseLength {
 			attempts++
 			continue
 		}
 
-		return strings.Join(lines, "<br>\n"), nil
+		return strings.Join(outputLines, "<br>\n"), nil
 	}
 }
 
 func (a *Augur) generateAppName(ctx context.Context, resultPrompt string) (string, error) {
 	attempts := 0
 	for {
+		if attempts > MAX_ATTEMPTS {
+			return "", fmt.Errorf("Failed to generate a valid app name")
+		}
+
 		convo := aiclient.NewConversation(prompts.GetPrompt(APPNAME_PROMPT), 0, 0)
 		res, err := a.Client.SendCompletionRequest(ctx, convo, resultPrompt)
 		if err != nil {
@@ -323,6 +339,8 @@ func (a *Augur) generateAppName(ctx context.Context, resultPrompt string) (strin
 		res = strings.Trim(res, "/")
 		res = strings.Trim(res, "'")
 		res = strings.Trim(res, "\"")
+		res = strings.Trim(res, "-")
+		res = strings.TrimSpace(res)
 
 		return res, nil
 	}
