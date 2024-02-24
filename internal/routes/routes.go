@@ -41,6 +41,7 @@ func (a *Augur) ServeHome() http.HandlerFunc {
 	}
 }
 
+// Unique identifier for the user, stored in a cookie.
 func (a *Augur) EnsureUUIDHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		_, err := r.Cookie("uuid")
@@ -61,6 +62,7 @@ func (a *Augur) EnsureUUIDHandler() http.HandlerFunc {
 	}
 }
 
+// Serves a file download of the generated prompt in Markdown format.
 func (a *Augur) Download() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		uuid, err := getRequestCookie(r, "uuid")
@@ -74,6 +76,7 @@ func (a *Augur) Download() http.HandlerFunc {
 	}
 }
 
+// Changes the AI model based on the user's selection from a dropdown menu.
 func (a *Augur) SwitchModel() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		_, err := getRequestCookie(r, "uuid")
@@ -123,6 +126,7 @@ type Prompt struct {
 	RequestLog   string
 }
 
+// Processes user input, generates a response, and serves the response to the user.
 func (a *Augur) DoWork() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Validate the UUID
@@ -135,14 +139,20 @@ func (a *Augur) DoWork() http.HandlerFunc {
 
 		// Grab the user input
 		r.ParseForm()
-		userInput, err := getUserInput(r)
-		if err != nil {
-			log.Default().Println(err)
+		userInput := r.Form.Get("userInput")
+		if userInput == "" {
+			log.Default().Println("No App Idea provided")
+			serveToast(w, err.Error())
+			return
+		} else if len(userInput) > 75 {
+			log.Default().Println("App Idea too long")
 			serveToast(w, err.Error())
 			return
 		}
+		userInput = "App Idea: " + userInput
+
 		// Check if we need to change the model
-		err = a.checkModelSwap(r, w)
+		err = a.checkIfModelSwap(r, w)
 		if err != nil {
 			log.Default().Println(err)
 			serveToast(w, err.Error())
@@ -279,6 +289,7 @@ func (a *Augur) DoWork() http.HandlerFunc {
 	}
 }
 
+// Regenerates the response of a given section of the prompt.
 func (a *Augur) Regenerate() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Validate the UUID
@@ -381,18 +392,8 @@ func (a *Augur) setTemperature(r *http.Request) error {
 	return nil
 }
 
-func getUserInput(r *http.Request) (string, error) {
-	userInput := r.Form.Get("userInput")
-	if userInput == "" {
-		return "", fmt.Errorf("No App Idea provided")
-	} else if len(userInput) > 75 {
-		return "", fmt.Errorf("App Idea too long")
-	}
-	userInput = "App Idea: " + userInput
-	return userInput, nil
-}
-
-func (a *Augur) checkModelSwap(r *http.Request, w http.ResponseWriter) error {
+// Compares the selected model to the current model and swaps if necessary.
+func (a *Augur) checkIfModelSwap(r *http.Request, w http.ResponseWriter) error {
 	modelVal := r.Form.Get("modelDropdown")
 	if modelVal == "" {
 		return fmt.Errorf("No model selected")
@@ -550,6 +551,7 @@ func (a *Augur) completeListSection(ctx context.Context, previousValue string, u
 	}
 }
 
+// Write the results to a temporary file to be downloaded by the user.
 func writeResults(uuid string, responsePrompt Prompt) error {
 	f, err := os.OpenFile(fmt.Sprintf("temp/response_%s.md", uuid), os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
 	if err != nil {
@@ -580,7 +582,7 @@ type Toast struct {
 }
 
 func serveToast(w http.ResponseWriter, message string) {
-	// Render the crawl_status template, which displays the toast
+	// Render the status toast
 	tmpl, err := template.ParseFiles("internal/html/templates/toast.gohtml")
 	if err != nil {
 		log.Default().Println(err)
