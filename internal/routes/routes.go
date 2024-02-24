@@ -425,6 +425,38 @@ var blockedWords = map[string]bool{
 	"```":   true,
 }
 
+func (a *Augur) generateAppName(ctx context.Context, previousValue string, appIdea string) (string, error) {
+	attempts := 0
+	tempAppIdea := appIdea
+	for {
+		if attempts > MAX_ATTEMPTS {
+			return "", fmt.Errorf("Failed to generate a valid app name")
+		} else if previousValue != "" {
+			tempAppIdea = appIdea + " (not " + previousValue + ")"
+		}
+
+		convo := aiclient.NewConversation(prompts.GetPrompt(APPNAME_PROMPT), 0, 0)
+		res, err := a.Client.SendCompletionRequest(ctx, convo, tempAppIdea)
+		if err != nil {
+			return "", err
+		}
+		res = strings.TrimSpace(res)
+		res = strings.Split(res, "\n")[0]
+		res = strings.TrimFunc(res, func(r rune) bool {
+			return r == '-' || r == '*' || unicode.IsDigit(r) || r == '[' || r == ']' || r == '.' || r == '`' || r == ' ' || r == '\n' || r == '\t' || r == '\\' || r == '"'
+		})
+
+		// Ensure the response is more than 1 word, and less than 5 words
+		words := strings.Fields(res)
+		if len(words) < 1 || len(words) > 5 {
+			attempts++
+			continue
+		}
+
+		return res, nil
+	}
+}
+
 func (a *Augur) completeIntroSection(ctx context.Context, previousValue string, userInput string) (string, error) {
 	attempts := 0
 	for {
@@ -508,38 +540,13 @@ func (a *Augur) completeListSection(ctx context.Context, previousValue string, u
 		if len(outputLines) < minResponseLength || len(outputLines) > maxResponseLength {
 			attempts++
 			continue
-		}
-
-		return strings.Join(outputLines, "<br>\n"), nil
-	}
-}
-
-func (a *Augur) generateAppName(ctx context.Context, previousValue string, resultPrompt string) (string, error) {
-	attempts := 0
-	for {
-		if attempts > MAX_ATTEMPTS {
-			return "", fmt.Errorf("Failed to generate a valid app name")
-		}
-
-		convo := aiclient.NewConversation(prompts.GetPrompt(APPNAME_PROMPT), 0, 0)
-		res, err := a.Client.SendCompletionRequest(ctx, convo, resultPrompt)
-		if err != nil {
-			return "", err
-		}
-		res = strings.TrimSpace(res)
-		res = strings.Split(res, "\n")[0]
-		res = strings.TrimFunc(res, func(r rune) bool {
-			return r == '-' || r == '*' || unicode.IsDigit(r) || r == '[' || r == ']' || r == '.' || r == '`' || r == ' ' || r == '\n' || r == '\t' || r == '\\' || r == '"'
-		})
-
-		// Ensure the response is more than 1 word, and less than 5 words
-		words := strings.Fields(res)
-		if len(words) < 1 || len(words) > 5 {
+		} else if res == previousValue {
+			fmt.Println("Res: " + res + " Matches previous value: " + previousValue)
 			attempts++
 			continue
 		}
 
-		return res, nil
+		return strings.Join(outputLines, "<br>\n"), nil
 	}
 }
 
