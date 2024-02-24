@@ -7,7 +7,7 @@
 <div class="relative mt-4 w-full max-w-3xl overflow-auto bg-gray-400 rounded p-4 shadow-lg" style="max-height: 50vh;">
     <form hx-post="/regenerate" hx-trigger="submit" hx-target="#response" hx-indicator="#spinner"> 
         <h4 class="text-xl font-bold mb-4 text-black">{{.AppName}}
-            <button style="vertical-align: middle;" onclick="selectRegen('appName');">
+            <button title="Regenerate" style="vertical-align: middle;" onclick="selectRegen('appName');">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-clockwise" viewBox="0 0 16 16" style="vertical-align: text-bottom;">
                     <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
                     <path d="M8 4a4 4 0 1 1-4 4 4 4 0 0 1 4-4z"/>
@@ -31,7 +31,7 @@
 
         <span class="text-gray-900">
         <p>{{.Introduction}}
-            <button style="vertical-align: middle;" onclick="selectRegen('introduction');">
+            <button title="Regenerate" style="vertical-align: middle;" onclick="selectRegen('introduction');">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-clockwise" viewBox="0 0 16 16" style="vertical-align: text-bottom;">
                     <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
                     <path d="M8 4a4 4 0 1 1-4 4 4 4 0 0 1 4-4z"/>
@@ -39,7 +39,7 @@
             </button>
         </p> <br>
         <h3> ## Pretraining 
-            <button style="vertical-align: middle;" onclick="selectRegen('pretraining');">
+            <button title="Regenerate" style="vertical-align: middle;" onclick="selectRegen('pretraining');">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-clockwise" viewBox="0 0 16 16" style="vertical-align: text-bottom;">
                     <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
                     <path d="M8 4a4 4 0 1 1-4 4 4 4 0 0 1 4-4z"/>
@@ -48,7 +48,7 @@
         </h3>
         <p>{{.Pretraining}}</p> <br>
         <h3> ## Rules 
-            <button style="vertical-align: middle;" onclick="selectRegen('rules');">
+            <button title="Regenerate" style="vertical-align: middle;" onclick="selectRegen('rules');">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-clockwise" viewBox="0 0 16 16" style="vertical-align: text-bottom;">
                     <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
                     <path d="M8 4a4 4 0 1 1-4 4 4 4 0 0 1 4-4z"/>
@@ -57,7 +57,7 @@
         </h3>
         <p>{{.Rules}}</p> <br>
         <h3> ## Important
-            <button style="vertical-align: middle;" onclick="selectRegen('important');">
+            <button title="Regenerate" style="vertical-align: middle;" onclick="selectRegen('important');">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-clockwise" viewBox="0 0 16 16" style="vertical-align: text-bottom;">
                     <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
                     <path d="M8 4a4 4 0 1 1-4 4 4 4 0 0 1 4-4z"/>

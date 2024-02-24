@@ -523,7 +523,7 @@ func (a *Augur) generateAppName(ctx context.Context, resultPrompt string) (strin
 		res = strings.TrimSpace(res)
 		res = strings.Split(res, "\n")[0]
 		res = strings.TrimFunc(res, func(r rune) bool {
-			return r == '-' || r == '*' || unicode.IsDigit(r) || r == '[' || r == ']' || r == '.' || r == '`' || r == ' ' || r == '\n' || r == '\t' || r == '"'
+			return r == '-' || r == '*' || unicode.IsDigit(r) || r == '[' || r == ']' || r == '.' || r == '`' || r == ' ' || r == '\n' || r == '\t' || r == '\\' || r == '"'
 		})
 
 		// Ensure the response is more than 1 word, and less than 5 words
