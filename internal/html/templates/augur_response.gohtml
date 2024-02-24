@@ -14,7 +14,7 @@
                 </svg>
             </button>
         </h4>
-        <a type="button" href="/download" title="Download Prompt" class="absolute top-0 right-0 bg-gray-600 hover:bg-gray-700 text-white font-bold py-1 px-2 mr-2 mt-2 text-xs rounded" style="right: 30px;">
+        <a type="button" href="/download?appName={{.AppName}}" title="Download Prompt" class="absolute top-0 right-0 bg-gray-600 hover:bg-gray-700 text-white font-bold py-1 px-2 mr-2 mt-2 text-xs rounded" style="right: 30px;">
             &#x1F4E5;
         </a>
         <button type="button" title="Clear Prompt" class="absolute top-0 right-0 bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 mr-3 mt-2 text-xs rounded" hx-post="/close" hx-trigger="click" hx-target="#response">
