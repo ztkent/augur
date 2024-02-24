@@ -176,7 +176,7 @@ func (a *Augur) DoWork() http.HandlerFunc {
 			go func() {
 				defer wg.Done()
 				var err error
-				responsePrompt.Introduction, err = a.completeIntroSection(r.Context(), userInput)
+				responsePrompt.Introduction, err = a.completeIntroSection(r.Context(), "", userInput)
 				if err != nil {
 					errChan <- err
 					return
@@ -186,7 +186,7 @@ func (a *Augur) DoWork() http.HandlerFunc {
 			go func() {
 				defer wg.Done()
 				var err error
-				responsePrompt.Pretraining, err = a.completeListSection(r.Context(), userInput, PT_PROMPT, 4, 6)
+				responsePrompt.Pretraining, err = a.completeListSection(r.Context(), "", userInput, PT_PROMPT, 4, 6)
 				if err != nil {
 					errChan <- err
 					return
@@ -196,7 +196,7 @@ func (a *Augur) DoWork() http.HandlerFunc {
 			go func() {
 				defer wg.Done()
 				var err error
-				responsePrompt.Rules, err = a.completeListSection(r.Context(), "", RULES_PROMPT, 4, 6)
+				responsePrompt.Rules, err = a.completeListSection(r.Context(), "", "", RULES_PROMPT, 4, 6)
 				if err != nil {
 					errChan <- err
 					return
@@ -206,7 +206,7 @@ func (a *Augur) DoWork() http.HandlerFunc {
 			go func() {
 				defer wg.Done()
 				var err error
-				responsePrompt.Important, err = a.completeListSection(r.Context(), "", REMINDER_PROMPT, 2, 4)
+				responsePrompt.Important, err = a.completeListSection(r.Context(), "", "", REMINDER_PROMPT, 2, 4)
 				if err != nil {
 					errChan <- err
 					return
@@ -216,7 +216,7 @@ func (a *Augur) DoWork() http.HandlerFunc {
 			go func() {
 				defer wg.Done()
 				var err error
-				responsePrompt.AppName, err = a.generateAppName(r.Context(), userInput)
+				responsePrompt.AppName, err = a.generateAppName(r.Context(), "", userInput)
 				if err != nil {
 					errChan <- err
 					return
@@ -334,31 +334,31 @@ func (a *Augur) Regenerate() http.HandlerFunc {
 func (a *Augur) regeneratePrompt(ctx context.Context, regenSection string, responsePrompt Prompt) (Prompt, error) {
 	switch regenSection {
 	case "introduction":
-		intro, err := a.completeIntroSection(ctx, responsePrompt.UserInput)
+		intro, err := a.completeIntroSection(ctx, responsePrompt.Introduction, responsePrompt.UserInput)
 		if err != nil {
 			return responsePrompt, err
 		}
 		responsePrompt.Introduction = intro
 	case "pretraining":
-		pretraining, err := a.completeListSection(ctx, responsePrompt.UserInput, PT_PROMPT, 4, 6)
+		pretraining, err := a.completeListSection(ctx, responsePrompt.Pretraining, responsePrompt.UserInput, PT_PROMPT, 4, 6)
 		if err != nil {
 			return responsePrompt, err
 		}
 		responsePrompt.Pretraining = pretraining
 	case "rules":
-		rules, err := a.completeListSection(ctx, "", RULES_PROMPT, 4, 6)
+		rules, err := a.completeListSection(ctx, responsePrompt.Rules, "", RULES_PROMPT, 4, 6)
 		if err != nil {
 			return responsePrompt, err
 		}
 		responsePrompt.Rules = rules
 	case "important":
-		important, err := a.completeListSection(ctx, "", REMINDER_PROMPT, 2, 4)
+		important, err := a.completeListSection(ctx, responsePrompt.Important, "", REMINDER_PROMPT, 2, 4)
 		if err != nil {
 			return responsePrompt, err
 		}
 		responsePrompt.Important = important
 	case "appName":
-		appName, err := a.generateAppName(ctx, responsePrompt.Introduction)
+		appName, err := a.generateAppName(ctx, responsePrompt.AppName, responsePrompt.UserInput)
 		if err != nil {
 			log.Default().Println(err)
 			return responsePrompt, err
@@ -367,6 +367,7 @@ func (a *Augur) regeneratePrompt(ctx context.Context, regenSection string, respo
 	default:
 		return responsePrompt, fmt.Errorf("Invalid section to regenerate")
 	}
+
 	return responsePrompt, nil
 }
 
@@ -424,7 +425,7 @@ var blockedWords = map[string]bool{
 	"```":   true,
 }
 
-func (a *Augur) completeIntroSection(ctx context.Context, userInput string) (string, error) {
+func (a *Augur) completeIntroSection(ctx context.Context, previousValue string, userInput string) (string, error) {
 	attempts := 0
 	for {
 		if attempts > MAX_ATTEMPTS {
@@ -456,12 +457,17 @@ func (a *Augur) completeIntroSection(ctx context.Context, userInput string) (str
 		if reset {
 			attempts++
 			continue
+		} else if res == previousValue {
+			fmt.Println("Res: " + res + " Matches previous value: " + previousValue)
+			attempts++
+			continue
 		}
+
 		return res, nil
 	}
 }
 
-func (a *Augur) completeListSection(ctx context.Context, userInput string, prompt string, minResponseLength int, maxResponseLength int) (string, error) {
+func (a *Augur) completeListSection(ctx context.Context, previousValue string, userInput string, prompt string, minResponseLength int, maxResponseLength int) (string, error) {
 	attempts := 0
 	for {
 		if attempts > MAX_ATTEMPTS {
@@ -508,7 +514,7 @@ func (a *Augur) completeListSection(ctx context.Context, userInput string, promp
 	}
 }
 
-func (a *Augur) generateAppName(ctx context.Context, resultPrompt string) (string, error) {
+func (a *Augur) generateAppName(ctx context.Context, previousValue string, resultPrompt string) (string, error) {
 	attempts := 0
 	for {
 		if attempts > MAX_ATTEMPTS {
