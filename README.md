@@ -15,3 +15,12 @@ When a system prompt is requested, Augur performs the following:
 - Each section is reviewed to ensure it aligns with the desired structure and content.
 - Presents the output to the user. Provides the option to download the prompt in Markdown format.
 - For each section, the user is given the option to regenerate the response, allowing for quick iteration.
+
+
+## Infrastructure
+- Frontend: HTML, TailwindCSS, HTMX
+- Backend: Go
+- Services: [OpenAI](https://platform.openai.com/docs/overview) (GPT-3.5 Turbo), [Anyscale](https://www.anyscale.com/endpoints) (Open-source Models)
+
+  
+    
