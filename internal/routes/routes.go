@@ -114,6 +114,7 @@ func (a *Augur) SwitchModel() http.HandlerFunc {
 }
 
 type Prompt struct {
+	UserInput    string
 	Introduction string
 	Pretraining  string
 	Rules        string
@@ -160,7 +161,9 @@ func (a *Augur) DoWork() http.HandlerFunc {
 		attempts := 0
 		complete := false
 		errChan := make(chan error, 5)
-		responsePrompt := Prompt{}
+		responsePrompt := Prompt{
+			UserInput: userInput,
+		}
 		for !complete {
 			if attempts > MAX_ATTEMPTS {
 				serveToast(w, "Failed to generate a valid response")
@@ -296,12 +299,19 @@ func (a *Augur) Regenerate() http.HandlerFunc {
 
 		// Set the new response prompt
 		responsePrompt := Prompt{
+			UserInput:    r.Form.Get("userInput"),
 			AppName:      r.Form.Get("appName"),
 			Introduction: r.Form.Get("introduction"),
 			Pretraining:  r.Form.Get("pretraining"),
 			Rules:        r.Form.Get("rules"),
 			Important:    r.Form.Get("important"),
 			RequestLog:   r.Form.Get("requestLog"),
+		}
+
+		responsePrompt, err = a.regeneratePrompt(r.Context(), regenSection, responsePrompt)
+		if err != nil {
+			log.Default().Println(err)
+			serveToast(w, err.Error())
 		}
 
 		// Render the template
@@ -319,6 +329,45 @@ func (a *Augur) Regenerate() http.HandlerFunc {
 		return
 
 	}
+}
+
+func (a *Augur) regeneratePrompt(ctx context.Context, regenSection string, responsePrompt Prompt) (Prompt, error) {
+	switch regenSection {
+	case "introduction":
+		intro, err := a.completeIntroSection(ctx, responsePrompt.UserInput)
+		if err != nil {
+			return responsePrompt, err
+		}
+		responsePrompt.Introduction = intro
+	case "pretraining":
+		pretraining, err := a.completeListSection(ctx, responsePrompt.UserInput, PT_PROMPT, 4, 6)
+		if err != nil {
+			return responsePrompt, err
+		}
+		responsePrompt.Pretraining = pretraining
+	case "rules":
+		rules, err := a.completeListSection(ctx, "", RULES_PROMPT, 4, 6)
+		if err != nil {
+			return responsePrompt, err
+		}
+		responsePrompt.Rules = rules
+	case "important":
+		important, err := a.completeListSection(ctx, "", REMINDER_PROMPT, 2, 4)
+		if err != nil {
+			return responsePrompt, err
+		}
+		responsePrompt.Important = important
+	case "appName":
+		appName, err := a.generateAppName(ctx, responsePrompt.Introduction)
+		if err != nil {
+			log.Default().Println(err)
+			return responsePrompt, err
+		}
+		responsePrompt.AppName = appName
+	default:
+		return responsePrompt, fmt.Errorf("Invalid section to regenerate")
+	}
+	return responsePrompt, nil
 }
 
 func (a *Augur) setTemperature(r *http.Request) error {
@@ -389,7 +438,7 @@ func (a *Augur) completeIntroSection(ctx context.Context, userInput string) (str
 			return "", err
 		}
 		res = strings.TrimFunc(res, func(r rune) bool {
-			return r == '-' || r == '*' || unicode.IsDigit(r) || r == '[' || r == ']' || r == '.' || r == '`' || r == ' ' || r == '\n'
+			return r == '-' || r == '*' || unicode.IsDigit(r) || r == '[' || r == ']' || r == '.' || r == '`' || r == ' ' || r == '\n' || r == '\t' || r == '\\' || r == '"'
 		})
 		if res == "" {
 			attempts++
@@ -433,7 +482,7 @@ func (a *Augur) completeListSection(ctx context.Context, userInput string, promp
 		outputLines := make([]string, 0)
 		for i, line := range lines {
 			line = strings.TrimFunc(line, func(r rune) bool {
-				return r == '-' || r == '*' || unicode.IsDigit(r) || r == '[' || r == ']' || r == '.' || r == '`' || r == ' ' || r == '\n'
+				return r == '-' || r == '*' || unicode.IsDigit(r) || r == '[' || r == ']' || r == '.' || r == '`' || r == ' ' || r == '\n' || r == '\t' || r == '"'
 			})
 			if line == "" {
 				continue
@@ -473,6 +522,9 @@ func (a *Augur) generateAppName(ctx context.Context, resultPrompt string) (strin
 		}
 		res = strings.TrimSpace(res)
 		res = strings.Split(res, "\n")[0]
+		res = strings.TrimFunc(res, func(r rune) bool {
+			return r == '-' || r == '*' || unicode.IsDigit(r) || r == '[' || r == ']' || r == '.' || r == '`' || r == ' ' || r == '\n' || r == '\t' || r == '"'
+		})
 
 		// Ensure the response is more than 1 word, and less than 5 words
 		words := strings.Fields(res)
@@ -480,13 +532,6 @@ func (a *Augur) generateAppName(ctx context.Context, resultPrompt string) (strin
 			attempts++
 			continue
 		}
-
-		// Trim any " OR / OR ' from the start/end of the response
-		res = strings.Trim(res, "/")
-		res = strings.Trim(res, "'")
-		res = strings.Trim(res, "\"")
-		res = strings.Trim(res, "-")
-		res = strings.TrimSpace(res)
 
 		return res, nil
 	}

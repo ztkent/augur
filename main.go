@@ -32,10 +32,10 @@ import (
 */
 
 const ( // Default values
-	AI_PROVIDER = "openai"
-	MODEL       = "turbo"
-	// AI_PROVIDER = "anyscale"
-	// MODEL       = "m8x7b"
+	// AI_PROVIDER = "openai"
+	// MODEL       = "turbo"
+	AI_PROVIDER = "anyscale"
+	MODEL       = "m8x7b"
 	TEMPERATURE = 0.2
 )
 

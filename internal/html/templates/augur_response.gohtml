@@ -20,6 +20,7 @@
         <button type="button" title="Clear Prompt" class="absolute top-0 right-0 bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 mr-3 mt-2 text-xs rounded" hx-post="/close" hx-trigger="click" hx-target="#response">
             X
         </button>
+        <input type="hidden" id="userInput" name="userInput" value="{{.UserInput}}">
         <input type="hidden" id="appName" name="appName" value="{{.AppName}}">
         <input type="hidden" id="introduction" name="introduction" value="{{.Introduction}}">
         <input type="hidden" id="pretraining" name="pretraining" value="{{.Pretraining}}">
