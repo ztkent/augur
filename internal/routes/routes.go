@@ -71,7 +71,10 @@ func (a *Augur) Download() http.HandlerFunc {
 			return
 		}
 		r.ParseForm()
-		appName := strings.ReplaceAll(r.Form.Get("appName"), " ", "_")
+		appName := "prompt"
+		if r.Form.Get("appName") != "" {
+			appName = strings.ReplaceAll(r.Form.Get("appName"), " ", "_")
+		}
 		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s.md", appName))
 		w.Header().Set("Content-Type", "application/octet-stream")
 		http.ServeFile(w, r, fmt.Sprintf("temp/response_%s.md", uuid))
