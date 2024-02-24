@@ -36,7 +36,7 @@ const ( // Default values
 	// MODEL       = "turbo"
 	AI_PROVIDER = "anyscale"
 	MODEL       = "m8x7b"
-	TEMPERATURE = 0.2
+	TEMPERATURE = 0.7
 )
 
 func main() {
