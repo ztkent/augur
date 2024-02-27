@@ -1,5 +1,6 @@
 # Augur
-An assistant to rapidly align new GPT projects. 
+An assistant to rapidly align new GPT projects.  
+Follows the best practices provided by [OpenAI](https://platform.openai.com/docs/guides/prompt-engineering/six-strategies-for-getting-better-results) 
 
 Try it here: [Augur](https://augur.ztkent.com)
 ## What is a 'System Prompt'
