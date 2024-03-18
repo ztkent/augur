@@ -13,7 +13,7 @@ import (
 	"unicode"
 
 	"github.com/Ztkent/augur/internal/prompts"
-	"github.com/Ztkent/augur/pkg/aiclient"
+	aiclient "github.com/Ztkent/go-openai-extended"
 	"github.com/google/uuid"
 )
 
@@ -147,11 +147,11 @@ func (a *Augur) DoWork() http.HandlerFunc {
 		userInput := r.Form.Get("userInput")
 		if userInput == "" {
 			log.Default().Println("No App Idea provided")
-			serveToast(w, err.Error())
+			serveToast(w, "No App Idea provided")
 			return
 		} else if len(userInput) > 75 {
 			log.Default().Println("App Idea too long")
-			serveToast(w, err.Error())
+			serveToast(w, "App Idea too long")
 			return
 		}
 		userInput = "App Idea: " + userInput

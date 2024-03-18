@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/Ztkent/augur/internal/routes"
-	"github.com/Ztkent/augur/pkg/aiclient"
+	aiclient "github.com/Ztkent/go-openai-extended"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/httprate"
