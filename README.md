@@ -21,7 +21,7 @@ When a system prompt is requested, Augur performs the following:
 ## Infrastructure
 - Frontend: HTML, TailwindCSS, HTMX
 - Backend: Go
-- Services: [OpenAI](https://platform.openai.com/docs/overview) (GPT-3.5 Turbo), [Anyscale](https://www.anyscale.com/endpoints) (Open-source Models)
+- Services: [OpenAI](https://platform.openai.com/docs/overview) (GPT-3.5/4), [Anyscale](https://www.anyscale.com/endpoints) (Open-source Models)
 
   
     
