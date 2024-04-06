@@ -20,7 +20,8 @@ import (
 /*
   Model Options:
     -openai:
-	  - gpt-3.5-turbo, aka: turbo
+	  - gpt-4-turbo-preview, aka: turbo
+	  - gpt-3.5-turbo, aka: turbo35
 	-anyscale:
 	  - mistralai/Mistral-7B-Instruct-v0.1, aka: m7b
 	  - mistralai/Mixtral-8x7B-Instruct-v0.1, aka: m8x7b
@@ -42,40 +43,9 @@ const ( // Default values
 func main() {
 	// Load the API key and connect to the AI provider
 	checkRequiredEnvs()
-	var client *aiclient.Client
-	if AI_PROVIDER == "openai" {
-		err := aiclient.MustLoadAPIKey(true, false)
-		if err != nil {
-			fmt.Printf("Failed to load OpenAI API key: %s\n", err)
-			return
-		}
-		// Connect to the OpenAI Client with the given model
-		if model, ok := aiclient.IsOpenAIModel(MODEL); ok {
-			zlog.Debug().Msg(fmt.Sprintf("Starting client with OpenAI-%s\n", model))
-			client = aiclient.MustConnectOpenAI(model, float32(TEMPERATURE))
-		} else {
-			// Default to GPT-3.5 Turbo
-			zlog.Debug().Msg(fmt.Sprintf("Starting client with OpenAI-%s\n", aiclient.GPT35Turbo))
-			client = aiclient.MustConnectOpenAI(aiclient.GPT35Turbo, float32(TEMPERATURE))
-		}
-	} else if AI_PROVIDER == "anyscale" {
-		err := aiclient.MustLoadAPIKey(false, true)
-		if err != nil {
-			zlog.Error().AnErr("Failed to load Anyscale API key", err)
-			return
-		}
-		// Connect to the Anyscale Client with the given model
-		if model, ok := aiclient.IsAnyscaleModel(MODEL); ok {
-			zlog.Debug().Msg(fmt.Sprintf("Starting client with Anyscale-%s\n", model))
-			client = aiclient.MustConnectAnyscale(model, float32(TEMPERATURE))
-		} else {
-			// Default to CodeLlama
-			zlog.Debug().Msg(fmt.Sprintf("Starting client with Anyscale-%s\n", aiclient.CodeLlama34b))
-			client = aiclient.MustConnectAnyscale(aiclient.CodeLlama34b, float32(TEMPERATURE))
-		}
-	} else {
-		fmt.Println(fmt.Sprintf("Invalid AI provider: %s provided, select either anyscale or openai", AI_PROVIDER))
-		return
+	client, err := ConnectDefaultClient()
+	if err != nil {
+		panic(err.Error())
 	}
 
 	// Initialize router and middleware
@@ -85,7 +55,7 @@ func main() {
 	r.Use(middleware.Recoverer)
 
 	// Define routes
-	defineRoutes(r, &routes.Augur{
+	DefineRoutes(r, &routes.Augur{
 		Client: client,
 	})
 
@@ -98,7 +68,7 @@ func main() {
 	return
 }
 
-func defineRoutes(r *chi.Mux, a *routes.Augur) {
+func DefineRoutes(r *chi.Mux, a *routes.Augur) {
 	// Apply a rate limiter to all routes
 	r.Use(httprate.Limit(
 		50,             // requests
@@ -107,12 +77,12 @@ func defineRoutes(r *chi.Mux, a *routes.Augur) {
 	))
 
 	// App page
-	r.Get("/", a.ServeHome())
-	r.Post("/work", a.DoWork())
-	r.Post("/close", a.EmptyResponse())
-	r.Get("/download", a.Download())
-	r.Post("/switch-model", a.SwitchModel())
-	r.Post("/regenerate", a.Regenerate())
+	r.Get("/", a.ServeHome())                     // Serve the landing page
+	r.Post("/work", a.DoWork())                   // Generate a new prompt
+	r.Post("/close", a.EmptyResponse())           // Clear an HTML div w/ HTMX
+	r.Get("/download", a.Download())              // Download the prompt response
+	r.Post("/switch-model", a.SwitchModel())      // Swap to another model option
+	r.Post("/regenerate", a.Regenerate())         // Regenerate a given section of the prompt
 	r.Post("/ensure-uuid", a.EnsureUUIDHandler()) // Make sure every active user is assigned a UUID
 
 	// Serve static files
@@ -134,6 +104,40 @@ func FileServer(r chi.Router, path string, root http.FileSystem) {
 	r.Get(path+"*", func(w http.ResponseWriter, r *http.Request) {
 		http.StripPrefix(path, http.FileServer(root)).ServeHTTP(w, r)
 	})
+}
+
+func ConnectDefaultClient() (*aiclient.Client, error) {
+	var client *aiclient.Client
+	if AI_PROVIDER == "openai" {
+		err := aiclient.MustLoadAPIKey(true, false)
+		if err != nil {
+			return nil, err
+		}
+		if model, ok := aiclient.IsOpenAIModel(MODEL); ok {
+			zlog.Debug().Msg(fmt.Sprintf("Starting client with OpenAI-%s\n", model))
+			client = aiclient.MustConnectOpenAI(model, float32(TEMPERATURE))
+		} else {
+			zlog.Debug().Msg(fmt.Sprintf("Starting client with OpenAI-%s\n", aiclient.GPT35Turbo))
+			client = aiclient.MustConnectOpenAI(aiclient.GPT35Turbo, float32(TEMPERATURE))
+		}
+	} else if AI_PROVIDER == "anyscale" {
+		err := aiclient.MustLoadAPIKey(false, true)
+		if err != nil {
+			return nil, err
+		}
+
+		if model, ok := aiclient.IsAnyscaleModel(MODEL); ok {
+			zlog.Debug().Msg(fmt.Sprintf("Starting client with Anyscale-%s\n", model))
+			client = aiclient.MustConnectAnyscale(model, float32(TEMPERATURE))
+		} else {
+
+			zlog.Debug().Msg(fmt.Sprintf("Starting client with Anyscale-%s\n", aiclient.CodeLlama34b))
+			client = aiclient.MustConnectAnyscale(aiclient.CodeLlama34b, float32(TEMPERATURE))
+		}
+	} else {
+		return nil, fmt.Errorf("Invalid AI provider: %s provided, select either anyscale or openai", AI_PROVIDER)
+	}
+	return client, nil
 }
 
 func checkRequiredEnvs() {
