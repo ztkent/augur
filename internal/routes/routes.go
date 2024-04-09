@@ -12,8 +12,8 @@ import (
 	"text/template"
 	"unicode"
 
+	"github.com/Ztkent/ai-util/pkg/aiutil"
 	"github.com/Ztkent/augur/internal/prompts"
-	aiclient "github.com/Ztkent/go-openai-extended"
 	"github.com/google/uuid"
 )
 
@@ -27,7 +27,7 @@ const (
 )
 
 type Augur struct {
-	Client *aiclient.Client
+	Client *aiutil.Client
 }
 
 func (a *Augur) EmptyResponse() http.HandlerFunc {
@@ -99,17 +99,17 @@ func (a *Augur) SwitchModel() http.HandlerFunc {
 		model := strings.Split(modelVal, ",")[1]
 
 		if provider == "openai" {
-			if model, ok := aiclient.IsOpenAIModel(model); ok {
+			if model, ok := aiutil.IsOpenAIModel(model); ok {
 				fmt.Println(fmt.Sprintf("Swapping client to OpenAI-%s\n", model))
-				a.Client = aiclient.MustConnectOpenAI(model, float32(a.Client.Temperature))
+				a.Client = aiutil.MustConnectOpenAI(model, float32(a.Client.Temperature))
 			} else {
 				http.Error(w, "Invalid OpenAI model", http.StatusBadRequest)
 				return
 			}
 		} else if provider == "anyscale" {
-			if model, ok := aiclient.IsAnyscaleModel(model); ok {
+			if model, ok := aiutil.IsAnyscaleModel(model); ok {
 				fmt.Println(fmt.Sprintf("Swapping client to Anyscale-%s\n", model))
-				a.Client = aiclient.MustConnectAnyscale(model, float32(a.Client.Temperature))
+				a.Client = aiutil.MustConnectAnyscale(model, float32(a.Client.Temperature))
 			} else {
 				http.Error(w, "Invalid Anyscale model", http.StatusBadRequest)
 				return
@@ -406,13 +406,13 @@ func (a *Augur) checkIfModelSwap(r *http.Request, w http.ResponseWriter) error {
 	provider := strings.Split(modelVal, ",")[0]
 	model := strings.Split(modelVal, ",")[1]
 	if provider == "openai" {
-		if model_name, ok := aiclient.IsOpenAIModel(model); ok {
+		if model_name, ok := aiutil.IsOpenAIModel(model); ok {
 			if model_name.String() != a.Client.Model {
 				a.SwitchModel()(w, r)
 			}
 		}
 	} else if provider == "anyscale" {
-		if model_name, ok := aiclient.IsAnyscaleModel(model); ok {
+		if model_name, ok := aiutil.IsAnyscaleModel(model); ok {
 			if model_name.String() != a.Client.Model {
 				a.SwitchModel()(w, r)
 			}
@@ -441,7 +441,7 @@ func (a *Augur) generateAppName(ctx context.Context, previousValue string, appId
 			tempAppIdea = appIdea + " (not " + previousValue + ")"
 		}
 
-		convo := aiclient.NewConversation(prompts.GetPrompt(APPNAME_PROMPT), 0, 0)
+		convo := aiutil.NewConversation(prompts.GetPrompt(APPNAME_PROMPT), 0, 0, false)
 		res, err := a.Client.SendCompletionRequest(ctx, convo, tempAppIdea)
 		if err != nil {
 			return "", err
@@ -470,7 +470,7 @@ func (a *Augur) completeIntroSection(ctx context.Context, previousValue string, 
 			return "", fmt.Errorf("Failed to generate a valid intro")
 		}
 
-		convo := aiclient.NewConversation(prompts.GetPrompt(INTRO_PROMPT), 0, 0)
+		convo := aiutil.NewConversation(prompts.GetPrompt(INTRO_PROMPT), 0, 0, false)
 		// convo.SeedConversation()
 		res, err := a.Client.SendCompletionRequest(ctx, convo, userInput)
 		if err != nil {
@@ -512,7 +512,7 @@ func (a *Augur) completeListSection(ctx context.Context, previousValue string, u
 			return "", fmt.Errorf("Failed to generate a valid " + prompt + " list")
 		}
 
-		convo := aiclient.NewConversation(prompts.GetPrompt(prompt), 0, 0)
+		convo := aiutil.NewConversation(prompts.GetPrompt(prompt), 0, 0, false)
 		// convo.SeedConversation()
 		var err error
 		res, err := a.Client.SendCompletionRequest(ctx, convo, userInput)

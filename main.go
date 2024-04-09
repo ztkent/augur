@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Ztkent/ai-util/pkg/aiutil"
 	"github.com/Ztkent/augur/internal/routes"
-	aiclient "github.com/Ztkent/go-openai-extended"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/httprate"
@@ -106,33 +106,33 @@ func FileServer(r chi.Router, path string, root http.FileSystem) {
 	})
 }
 
-func ConnectDefaultClient() (*aiclient.Client, error) {
-	var client *aiclient.Client
+func ConnectDefaultClient() (*aiutil.Client, error) {
+	var client *aiutil.Client
 	if AI_PROVIDER == "openai" {
-		err := aiclient.MustLoadAPIKey(true, false)
+		err := aiutil.MustLoadAPIKey(true, false)
 		if err != nil {
 			return nil, err
 		}
-		if model, ok := aiclient.IsOpenAIModel(MODEL); ok {
+		if model, ok := aiutil.IsOpenAIModel(MODEL); ok {
 			zlog.Debug().Msg(fmt.Sprintf("Starting client with OpenAI-%s\n", model))
-			client = aiclient.MustConnectOpenAI(model, float32(TEMPERATURE))
+			client = aiutil.MustConnectOpenAI(model, float32(TEMPERATURE))
 		} else {
-			zlog.Debug().Msg(fmt.Sprintf("Starting client with OpenAI-%s\n", aiclient.GPT35Turbo))
-			client = aiclient.MustConnectOpenAI(aiclient.GPT35Turbo, float32(TEMPERATURE))
+			zlog.Debug().Msg(fmt.Sprintf("Starting client with OpenAI-%s\n", aiutil.GPT35Turbo))
+			client = aiutil.MustConnectOpenAI(aiutil.GPT35Turbo, float32(TEMPERATURE))
 		}
 	} else if AI_PROVIDER == "anyscale" {
-		err := aiclient.MustLoadAPIKey(false, true)
+		err := aiutil.MustLoadAPIKey(false, true)
 		if err != nil {
 			return nil, err
 		}
 
-		if model, ok := aiclient.IsAnyscaleModel(MODEL); ok {
+		if model, ok := aiutil.IsAnyscaleModel(MODEL); ok {
 			zlog.Debug().Msg(fmt.Sprintf("Starting client with Anyscale-%s\n", model))
-			client = aiclient.MustConnectAnyscale(model, float32(TEMPERATURE))
+			client = aiutil.MustConnectAnyscale(model, float32(TEMPERATURE))
 		} else {
 
-			zlog.Debug().Msg(fmt.Sprintf("Starting client with Anyscale-%s\n", aiclient.CodeLlama34b))
-			client = aiclient.MustConnectAnyscale(aiclient.CodeLlama34b, float32(TEMPERATURE))
+			zlog.Debug().Msg(fmt.Sprintf("Starting client with Anyscale-%s\n", aiutil.CodeLlama34b))
+			client = aiutil.MustConnectAnyscale(aiutil.CodeLlama34b, float32(TEMPERATURE))
 		}
 	} else {
 		return nil, fmt.Errorf("Invalid AI provider: %s provided, select either anyscale or openai", AI_PROVIDER)
