@@ -1,4 +1,5 @@
-# Augur
+# <img width="40" alt="logo_augur" src="https://github.com/Ztkent/augur/assets/7357311/b2a433f6-c611-4246-8c32-08517f9f07e7"> Augur
+
 An assistant to rapidly align new LLM projects.  
 Follows the best practices provided by [OpenAI](https://platform.openai.com/docs/guides/prompt-engineering/six-strategies-for-getting-better-results) 
 
