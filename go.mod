@@ -3,7 +3,7 @@ module github.com/Ztkent/augur
 go 1.22.0
 
 require (
-	github.com/Ztkent/ai-util v0.5.1
+	github.com/Ztkent/ai-util v0.5.2
 	github.com/go-chi/chi/v5 v5.0.12
 	github.com/go-chi/httprate v0.9.0
 	github.com/google/uuid v1.6.0

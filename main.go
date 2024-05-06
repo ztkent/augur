@@ -16,21 +16,6 @@ import (
 	"github.com/go-chi/httprate"
 )
 
-/*
-  Model Options:
-    -openai:
-	  - gpt-4-turbo-preview, aka: turbo
-	  - gpt-3.5-turbo, aka: turbo35
-	-anyscale:
-	  - mistralai/Mistral-7B-Instruct-v0.1, aka: m7b
-	  - mistralai/Mixtral-8x7B-Instruct-v0.1, aka: m8x7b
-	  - meta-llama/Llama-2-7b-chat-hf, aka: l7b
-	  - meta-llama/Llama-2-13b-chat-hf, aka: l13b
-	  - meta-llama/Llama-2-70b-chat-hf, aka: l70b
-	  - codellama/CodeLlama-34b-Instruct-hf, aka: cl34b
-	  - codellama/CodeLlama-70b-Instruct-hf, aka: cl70b
-*/
-
 const ( // Default values
 	DEFAULT_AI_PROVIDER = "anyscale"
 	DEFAULT_MODEL       = "m8x7b"
