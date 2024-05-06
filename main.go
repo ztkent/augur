@@ -9,12 +9,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Ztkent/ai-util/pkg/aiutil"
+	aiutil "github.com/Ztkent/ai-util"
 	"github.com/Ztkent/augur/internal/routes"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/httprate"
-	zlog "github.com/rs/zerolog/log"
 )
 
 /*
@@ -33,11 +32,9 @@ import (
 */
 
 const ( // Default values
-	// AI_PROVIDER = "openai"
-	// MODEL       = "turbo"
-	AI_PROVIDER = "anyscale"
-	MODEL       = "m8x7b"
-	TEMPERATURE = 0.7
+	DEFAULT_AI_PROVIDER = "anyscale"
+	DEFAULT_MODEL       = "m8x7b"
+	DEFAULT_TEMPERATURE = 0.7
 )
 
 func main() {
@@ -106,36 +103,10 @@ func FileServer(r chi.Router, path string, root http.FileSystem) {
 	})
 }
 
-func ConnectDefaultClient() (*aiutil.Client, error) {
-	var client *aiutil.Client
-	if AI_PROVIDER == "openai" {
-		err := aiutil.MustLoadAPIKey(true, false)
-		if err != nil {
-			return nil, err
-		}
-		if model, ok := aiutil.IsOpenAIModel(MODEL); ok {
-			zlog.Debug().Msg(fmt.Sprintf("Starting client with OpenAI-%s\n", model))
-			client = aiutil.MustConnectOpenAI(model, float32(TEMPERATURE))
-		} else {
-			zlog.Debug().Msg(fmt.Sprintf("Starting client with OpenAI-%s\n", aiutil.GPT35Turbo))
-			client = aiutil.MustConnectOpenAI(aiutil.GPT35Turbo, float32(TEMPERATURE))
-		}
-	} else if AI_PROVIDER == "anyscale" {
-		err := aiutil.MustLoadAPIKey(false, true)
-		if err != nil {
-			return nil, err
-		}
-
-		if model, ok := aiutil.IsAnyscaleModel(MODEL); ok {
-			zlog.Debug().Msg(fmt.Sprintf("Starting client with Anyscale-%s\n", model))
-			client = aiutil.MustConnectAnyscale(model, float32(TEMPERATURE))
-		} else {
-
-			zlog.Debug().Msg(fmt.Sprintf("Starting client with Anyscale-%s\n", aiutil.CodeLlama34b))
-			client = aiutil.MustConnectAnyscale(aiutil.CodeLlama34b, float32(TEMPERATURE))
-		}
-	} else {
-		return nil, fmt.Errorf("Invalid AI provider: %s provided, select either anyscale or openai", AI_PROVIDER)
+func ConnectDefaultClient() (aiutil.Client, error) {
+	client, err := aiutil.NewAIClient(DEFAULT_AI_PROVIDER, DEFAULT_MODEL, DEFAULT_TEMPERATURE)
+	if err != nil {
+		return nil, err
 	}
 	return client, nil
 }

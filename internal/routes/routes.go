@@ -12,7 +12,7 @@ import (
 	"text/template"
 	"unicode"
 
-	"github.com/Ztkent/ai-util/pkg/aiutil"
+	aiutil "github.com/Ztkent/ai-util"
 	"github.com/Ztkent/augur/internal/prompts"
 	"github.com/google/uuid"
 )
@@ -27,7 +27,7 @@ const (
 )
 
 type Augur struct {
-	Client *aiutil.Client
+	Client aiutil.Client
 }
 
 func (a *Augur) EmptyResponse() http.HandlerFunc {
@@ -101,7 +101,11 @@ func (a *Augur) SwitchModel() http.HandlerFunc {
 		if provider == "openai" {
 			if model, ok := aiutil.IsOpenAIModel(model); ok {
 				fmt.Println(fmt.Sprintf("Swapping client to OpenAI-%s\n", model))
-				a.Client = aiutil.MustConnectOpenAI(model, float32(a.Client.Temperature))
+				a.Client, err = aiutil.ConnectOpenAI(model.String(), float32(a.Client.GetTemperature()))
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
 			} else {
 				http.Error(w, "Invalid OpenAI model", http.StatusBadRequest)
 				return
@@ -109,7 +113,11 @@ func (a *Augur) SwitchModel() http.HandlerFunc {
 		} else if provider == "anyscale" {
 			if model, ok := aiutil.IsAnyscaleModel(model); ok {
 				fmt.Println(fmt.Sprintf("Swapping client to Anyscale-%s\n", model))
-				a.Client = aiutil.MustConnectAnyscale(model, float32(a.Client.Temperature))
+				a.Client, err = aiutil.ConnectAnyscale(model.String(), float32(a.Client.GetTemperature()))
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
 			} else {
 				http.Error(w, "Invalid Anyscale model", http.StatusBadRequest)
 				return
@@ -169,7 +177,7 @@ func (a *Augur) DoWork() http.HandlerFunc {
 			return
 		}
 		// Log the complete request
-		requestLog := fmt.Sprint(userInput + " - Model: " + a.Client.Model + " - " + fmt.Sprintf("Temp: %f", a.Client.Temperature))
+		requestLog := fmt.Sprint(userInput + " - Model: " + a.Client.GetModel() + " - " + fmt.Sprintf("Temp: %f", a.Client.GetTemperature()))
 		fmt.Println(requestLog)
 
 		// Generate the each piece of the response concurrently
@@ -407,13 +415,13 @@ func (a *Augur) checkIfModelSwap(r *http.Request, w http.ResponseWriter) error {
 	model := strings.Split(modelVal, ",")[1]
 	if provider == "openai" {
 		if model_name, ok := aiutil.IsOpenAIModel(model); ok {
-			if model_name.String() != a.Client.Model {
+			if model_name.String() != a.Client.GetModel() {
 				a.SwitchModel()(w, r)
 			}
 		}
 	} else if provider == "anyscale" {
 		if model_name, ok := aiutil.IsAnyscaleModel(model); ok {
-			if model_name.String() != a.Client.Model {
+			if model_name.String() != a.Client.GetModel() {
 				a.SwitchModel()(w, r)
 			}
 		}
@@ -441,7 +449,7 @@ func (a *Augur) generateAppName(ctx context.Context, previousValue string, appId
 			tempAppIdea = appIdea + " (not " + previousValue + ")"
 		}
 
-		convo := aiutil.NewConversation(prompts.GetPrompt(APPNAME_PROMPT), 0, 0, false)
+		convo := aiutil.NewConversation(prompts.GetPrompt(APPNAME_PROMPT), 0, false)
 		res, err := a.Client.SendCompletionRequest(ctx, convo, tempAppIdea)
 		if err != nil {
 			return "", err
@@ -470,7 +478,7 @@ func (a *Augur) completeIntroSection(ctx context.Context, previousValue string, 
 			return "", fmt.Errorf("Failed to generate a valid intro")
 		}
 
-		convo := aiutil.NewConversation(prompts.GetPrompt(INTRO_PROMPT), 0, 0, false)
+		convo := aiutil.NewConversation(prompts.GetPrompt(INTRO_PROMPT), 0, false)
 		// convo.SeedConversation()
 		res, err := a.Client.SendCompletionRequest(ctx, convo, userInput)
 		if err != nil {
@@ -512,7 +520,7 @@ func (a *Augur) completeListSection(ctx context.Context, previousValue string, u
 			return "", fmt.Errorf("Failed to generate a valid " + prompt + " list")
 		}
 
-		convo := aiutil.NewConversation(prompts.GetPrompt(prompt), 0, 0, false)
+		convo := aiutil.NewConversation(prompts.GetPrompt(prompt), 0, false)
 		// convo.SeedConversation()
 		var err error
 		res, err := a.Client.SendCompletionRequest(ctx, convo, userInput)
