@@ -12,9 +12,9 @@ import (
 	"text/template"
 	"unicode"
 
-	aiutil "github.com/Ztkent/ai-util"
-	"github.com/Ztkent/augur/internal/prompts"
 	"github.com/google/uuid"
+	aiutil "github.com/ztkent/ai-util"
+	"github.com/ztkent/augur/internal/prompts"
 )
 
 const (
@@ -108,18 +108,6 @@ func (a *Augur) SwitchModel() http.HandlerFunc {
 				}
 			} else {
 				http.Error(w, "Invalid OpenAI model", http.StatusBadRequest)
-				return
-			}
-		} else if provider == "anyscale" {
-			if model, ok := aiutil.IsAnyscaleModel(model); ok {
-				fmt.Println(fmt.Sprintf("Swapping client to Anyscale-%s\n", model))
-				a.Client, err = aiutil.ConnectAnyscale(model.String(), float32(a.Client.GetTemperature()))
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				}
-			} else {
-				http.Error(w, "Invalid Anyscale model", http.StatusBadRequest)
 				return
 			}
 		} else {
@@ -415,12 +403,6 @@ func (a *Augur) checkIfModelSwap(r *http.Request, w http.ResponseWriter) error {
 	model := strings.Split(modelVal, ",")[1]
 	if provider == "openai" {
 		if model_name, ok := aiutil.IsOpenAIModel(model); ok {
-			if model_name.String() != a.Client.GetModel() {
-				a.SwitchModel()(w, r)
-			}
-		}
-	} else if provider == "anyscale" {
-		if model_name, ok := aiutil.IsAnyscaleModel(model); ok {
 			if model_name.String() != a.Client.GetModel() {
 				a.SwitchModel()(w, r)
 			}

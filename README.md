@@ -1,7 +1,10 @@
-# <img width="40" alt="logo_augur" src="https://github.com/Ztkent/augur/assets/7357311/b2a433f6-c611-4246-8c32-08517f9f07e7"> Augur
+# <img width="40" alt="logo_augur" src="https://github.com/ztkent/augur/assets/7357311/b2a433f6-c611-4246-8c32-08517f9f07e7"> Augur
 
-An assistant to rapidly align new LLM projects.  
-Follows the best practices provided by [OpenAI](https://platform.openai.com/docs/guides/prompt-engineering/six-strategies-for-getting-better-results) 
+Generate system prompts for LLM applications:
+
+<div>
+    <img style="display: flex; justify-content: center; width: 100%;" width="750" alt="image" src="https://github.com/user-attachments/assets/4269e105-f190-45b6-aa73-abaf7e267c8d" />
+</div>
 
 ## How Does It Work?
 When a system prompt is requested:
@@ -10,12 +13,5 @@ When a system prompt is requested:
 - Each section is reviewed to ensure it aligns with the desired structure and content.
 - Presents the combined output. Provides the option to download the prompt in Markdown format.
 - Options to regenerate sections, or the entire prompt.
-
-
-## Infrastructure
-- Frontend: HTML, TailwindCSS, HTMX
-- Backend: Go
-- Services: [OpenAI](https://platform.openai.com/docs/overview) (GPT-3.5/4), [Anyscale](https://www.anyscale.com/endpoints) (Open-source Models)
-
-  
+- Follows the best practices [provided by OpenAI](https://cookbook.openai.com/related_resources#papers-on-advanced-prompting-to-improve-reasoning)
     

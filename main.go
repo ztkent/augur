@@ -9,16 +9,16 @@ import (
 	"strings"
 	"time"
 
-	aiutil "github.com/Ztkent/ai-util"
-	"github.com/Ztkent/augur/internal/routes"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/httprate"
+	aiutil "github.com/ztkent/ai-util"
+	"github.com/ztkent/augur/internal/routes"
 )
 
 const ( // Default values
-	DEFAULT_AI_PROVIDER = "anyscale"
-	DEFAULT_MODEL       = "m8x7b"
+	DEFAULT_AI_PROVIDER = "openai"
+	DEFAULT_MODEL       = "turbo"
 	DEFAULT_TEMPERATURE = 0.7
 )
 
