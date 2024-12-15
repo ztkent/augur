@@ -1,4 +1,4 @@
-# <img width="40" alt="logo_augur" src="https://github.com/ztkent/augur/assets/7357311/b2a433f6-c611-4246-8c32-08517f9f07e7"> Augur
+# Augur
 
 Generate system prompts for LLM applications:
 
